@@ -184,53 +184,8 @@ def chat():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Add these routes to your src/api/app.py file, right before the if __name__ == '__main__': line
-
-@app.route('/api/chat/sessions/<session_id>/history', methods=['GET'])
-def get_conversation_history(session_id):
-    """Get conversation history for a session"""
-    history = conversation_memory.get(session_id, [])
-    return jsonify({
-        "session_id": session_id,
-        "message_count": len(history),
-        "messages": history
-    })
-
-@app.route('/api/chat/sessions/<session_id>/clear', methods=['POST'])
-def clear_conversation_history(session_id):
-    """Clear conversation history for a session"""
-    if session_id in conversation_memory:
-        del conversation_memory[session_id]
-        return jsonify({"message": f"Cleared conversation history for session {session_id}"})
-    else:
-        return jsonify({"message": f"No conversation history found for session {session_id}"})
-
-@app.route('/api/search', methods=['POST'])
-def search():
-    """Direct search endpoint"""
-    try:
-        data = request.get_json()
-        query = data.get("query", "")
-        overrides = data.get("overrides", {})
-        
-        if not query:
-            return jsonify({"error": "Missing 'query' parameter"}), 400
-        
-        # Run async search
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            result = loop.run_until_complete(rag_engine.search_documents(query, overrides))
-        finally:
-            loop.close()
-            
-        return jsonify(result)
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
 if __name__ == '__main__':
     print("🚀 Enhanced RAG API Server Starting...")
     print("✅ Environment loaded")
-    print("🌐 Health: http://localhost:5001/api/health")
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    print("🌐 Health: http://localhost:5000/api/health")
+    app.run(debug=True, host='0.0.0.0', port=5000)
