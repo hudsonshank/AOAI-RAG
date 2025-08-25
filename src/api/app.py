@@ -1,190 +1,190 @@
 """
-Enhanced Flask API with proper environment loading
+Enhanced Flask API with Client-Aware RAG Engine
+Updated to use the client metadata tagging system
 """
 
+import re
 import os
 import json
 import asyncio
 from datetime import datetime
 from typing import List, Dict, Any
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from dotenv import load_dotenv
 
 # Load environment first
 load_dotenv()
 
-from azure.search.documents import SearchClient
-from azure.core.credentials import AzureKeyCredential
-from openai import AsyncAzureOpenAI
+# Import the client-aware RAG engine
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from core.query_optimizer import AdvancedQueryOptimizer
+from api.client_aware_rag import ClientAwareRAGEngine
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for frontend integration
 conversation_memory = {}
 
-class EnhancedRAGEngine:
-    def __init__(self):
-        # Initialize Azure clients
-        self.search_client = SearchClient(
-            endpoint=os.getenv("AZURE_SEARCH_ENDPOINT"),
-            index_name=os.getenv("EXISTING_INDEX_NAME"),
-            credential=AzureKeyCredential(os.getenv("AZURE_SEARCH_ADMIN_KEY"))
-        )
-        
-        self.openai_client = AsyncAzureOpenAI(
-            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
-        )
-        
-        self.chat_model = os.getenv("AZURE_OPENAI_CHAT_MODEL")
-        self.query_optimizer = AdvancedQueryOptimizer()
-        print("✅ Enhanced RAG Engine initialized")
+# Initialize the client-aware RAG engine
+try:
+    rag_engine = ClientAwareRAGEngine()
+    print("🎉 Client-Aware RAG engine ready!")
+    print("✅ Features: client filtering, PM filtering, category filtering")
     
-    async def enhanced_chat(self, messages: List[Dict], session_id: str = "default", overrides: Dict = None) -> Dict:
-        """Enhanced chat with optimization and memory"""
-        thoughts = []
-        start_time = datetime.utcnow()
-        
-        try:
-            user_query = messages[-1]["content"]
-            conversation_history = conversation_memory.get(session_id, [])
-            
-            # Step 1: Query Optimization
-            thoughts.append({"title": "Query Optimization", "description": "Optimizing search query", "timestamp": datetime.utcnow().isoformat()})
-            
-            optimization_result = await self.query_optimizer.optimize_query(user_query, conversation_history)
-            optimized_query = optimization_result["optimized_query"]
-            
-            thoughts.append({"title": "Query Enhanced", "description": f"'{user_query}' → '{optimized_query}'", "timestamp": datetime.utcnow().isoformat()})
-            
-            # Step 2: Search
-            thoughts.append({"title": "Document Search", "description": "Searching knowledge base", "timestamp": datetime.utcnow().isoformat()})
-            
-            search_results = await self.search_documents(optimized_query, overrides or {})
-            
-            thoughts.append({"title": "Sources Found", "description": f"Retrieved {len(search_results['sources'])} sources", "timestamp": datetime.utcnow().isoformat()})
-            
-            # Step 3: Generate Response
-            thoughts.append({"title": "Answer Generation", "description": "Creating response with citations", "timestamp": datetime.utcnow().isoformat()})
-            
-            response = await self.generate_response(user_query, search_results["sources"])
-            
-            # Simple follow-up questions
-            followup_questions = [
-                f"Can you provide more details about {user_query.lower()}?",
-                "Are there related policies I should know about?",
-                "What are the next steps?"
-            ]
-            
-            # Update memory
-            conversation_memory[session_id] = conversation_history + [
-                {"role": "user", "content": user_query},
-                {"role": "assistant", "content": response["content"]}
-            ][-20:]  # Keep last 20 messages
-            
-            processing_time = (datetime.utcnow() - start_time).total_seconds()
-            
-            return {
-                "message": response,
-                "context": {
-                    "thoughts": thoughts,
-                    "data_points": search_results["sources"],
-                    "followup_questions": followup_questions,
-                    "optimization": optimization_result,
-                    "session_id": session_id,
-                    "processing_time": f"{processing_time:.2f}s"
-                }
-            }
-            
-        except Exception as e:
-            return {
-                "message": {"content": f"Error: {str(e)}", "role": "assistant"},
-                "context": {"thoughts": thoughts, "error": str(e)}
-            }
+    # Get available clients for reference
+    clients = rag_engine.get_client_list()
+    if clients:
+        print(f"🏢 Available clients: {len(clients)} total")
+        for client in clients[:5]:  # Show top 5
+            print(f"   - {client['name']}: {client['document_count']} documents")
+        if len(clients) > 5:
+            print(f"   ... and {len(clients) - 5} more clients")
     
-    async def search_documents(self, query: str, overrides: Dict) -> Dict:
-        """Search documents"""
-        try:
-            results = self.search_client.search(
-                search_text=query,
-                top=overrides.get("top", 5)
-            )
-            
-            sources = []
-            for result in results:
-                sources.append({
-                    "content": result.get("chunk", ""),
-                    "content_preview": result.get("chunk", "")[:200] + "...",
-                    "sourcefile": result.get("filename", ""),
-                    "sourcepage": result.get("document_path", ""),
-                    "score": float(result.get("@search.score", 0))
-                })
-            
-            return {"sources": sources, "search_query": query}
-            
-        except Exception as e:
-            return {"sources": [], "search_query": query, "error": str(e)}
-    
-    async def generate_response(self, user_query: str, sources: List[Dict]) -> Dict:
-        """Generate response with citations"""
-        try:
-            context = "\n\n".join([
-                f"Source: {s.get('sourcefile', 'Unknown')}\n{s.get('content', '')}"
-                for s in sources[:3]
-            ])
-            
-            messages = [
-                {"role": "system", "content": f"Answer based on these sources. Include citations [filename].\n\nSources:\n{context}"},
-                {"role": "user", "content": user_query}
-            ]
-            
-            response = await self.openai_client.chat.completions.create(
-                model=self.chat_model,
-                messages=messages,
-                temperature=0.3,
-                max_tokens=500
-            )
-            
-            return {"content": response.choices[0].message.content, "role": "assistant"}
-            
-        except Exception as e:
-            return {"content": f"Found relevant information but couldn't generate response: {str(e)}", "role": "assistant"}
-
-# Initialize engine
-rag_engine = EnhancedRAGEngine()
+except Exception as e:
+    print(f"💥 Failed to initialize Client-Aware RAG engine: {str(e)}")
+    exit(1)
 
 @app.route('/api/health', methods=['GET'])
 def health():
+    """Health check endpoint"""
     return jsonify({
         "status": "healthy",
-        "version": "enhanced-v1.0",
-        "features": ["query_optimization", "conversation_memory", "thought_transparency"]
+        "version": "client-aware-v2.0",
+        "features": [
+            "client_filtering", 
+            "pm_filtering", 
+            "category_filtering",
+            "query_optimization", 
+            "conversation_memory", 
+            "thought_transparency"
+        ]
     })
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
+    """Enhanced chat endpoint with client awareness"""
     try:
         data = request.get_json()
         messages = data.get("messages", [])
         session_id = data.get("session_id", "default")
-        overrides = data.get("overrides", {})
+        
+        # Client filtering parameters
+        client_context = data.get("client_context")  # Specific client to focus on
+        pm_context = data.get("pm_context")  # PM initial (C, S, K)
+        
+        if not messages:
+            return jsonify({"error": "Missing 'messages' parameter"}), 400
         
         # Run async function
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
-            result = loop.run_until_complete(rag_engine.enhanced_chat(messages, session_id, overrides))
+            result = loop.run_until_complete(
+                rag_engine.client_aware_chat(
+                    messages=messages,
+                    client_context=client_context,
+                    pm_context=pm_context,
+                    session_id=session_id
+                )
+            )
         finally:
             loop.close()
         
         return jsonify(result)
         
     except Exception as e:
+        print(f"Chat error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-# Add these routes to your src/api/app.py file, right before the if __name__ == '__main__': line
+@app.route('/api/search', methods=['POST'])
+def search():
+    """Enhanced search endpoint with client filtering"""
+    try:
+        data = request.get_json()
+        query = data.get("query", "")
+        
+        if not query:
+            return jsonify({"error": "Missing 'query' parameter"}), 400
+        
+        # Client filtering parameters
+        client_name = data.get("client_name")
+        pm_initial = data.get("pm_initial") 
+        document_category = data.get("document_category")
+        top = data.get("top", 5)
+        include_internal = data.get("include_internal", True)
+        
+        # Run async search
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(
+                rag_engine.client_aware_search(
+                    query=query,
+                    client_name=client_name,
+                    pm_initial=pm_initial,
+                    document_category=document_category,
+                    top=top,
+                    include_internal=include_internal
+                )
+            )
+        finally:
+            loop.close()
+            
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"Search error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/clients', methods=['GET'])
+def get_clients():
+    """Get available clients in the system"""
+    try:
+        clients = rag_engine.get_client_list()
+        
+        return jsonify({
+            "clients": clients,
+            "total_clients": len(clients)
+        })
+        
+    except Exception as e:
+        print(f"Get clients error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/clients/<client_name>/stats', methods=['GET'])
+def get_client_stats(client_name):
+    """Get statistics for a specific client"""
+    try:
+        # Search for documents from this client
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(
+                rag_engine.client_aware_search(
+                    query="*",
+                    client_name=client_name,
+                    top=100,
+                    include_internal=False
+                )
+            )
+        finally:
+            loop.close()
+        
+        # Group by category
+        categories = {}
+        for source in result["sources"]:
+            category = source.get("document_category", "general")
+            categories[category] = categories.get(category, 0) + 1
+        
+        return jsonify({
+            "client_name": client_name,
+            "total_documents": len(result["sources"]),
+            "categories": categories
+        })
+        
+    except Exception as e:
+        print(f"Client stats error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/chat/sessions/<session_id>/history', methods=['GET'])
 def get_conversation_history(session_id):
@@ -205,32 +205,94 @@ def clear_conversation_history(session_id):
     else:
         return jsonify({"message": f"No conversation history found for session {session_id}"})
 
-@app.route('/api/search', methods=['POST'])
-def search():
-    """Direct search endpoint"""
+@app.route('/api/search/suggestions', methods=['POST'])
+def get_search_suggestions():
+    """Get search suggestions based on client context"""
     try:
         data = request.get_json()
-        query = data.get("query", "")
-        overrides = data.get("overrides", {})
+        client_name = data.get("client_name")
+        pm_initial = data.get("pm_initial")
         
-        if not query:
-            return jsonify({"error": "Missing 'query' parameter"}), 400
+        suggestions = []
         
-        # Run async search
+        if client_name:
+            suggestions.extend([
+                f"What financial reports does {client_name} have?",
+                f"Show me {client_name} meeting notes",
+                f"What projects is {client_name} working on?",
+                f"{client_name} behavioral profiles",
+            ])
+        elif pm_initial:
+            suggestions.extend([
+                f"What clients does PM-{pm_initial} manage?",
+                f"Show me PM-{pm_initial} project updates",
+                f"PM-{pm_initial} client financials",
+            ])
+        else:
+            suggestions.extend([
+                "What clients do we work with?",
+                "Show me recent meeting notes", 
+                "What training materials are available?",
+                "Autobahn tools and resources"
+            ])
+        
+        return jsonify({
+            "suggestions": suggestions[:6]  # Limit to 6 suggestions
+        })
+        
+    except Exception as e:
+        print(f"Suggestions error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+# Backward compatibility route (for old frontend)
+@app.route('/api/chat_old', methods=['POST'])
+def chat_old():
+    """Backward compatible chat endpoint (without client awareness)"""
+    try:
+        data = request.get_json()
+        messages = data.get("messages", [])
+        session_id = data.get("session_id", "default")
+        
+        if not messages:
+            return jsonify({"error": "Missing 'messages' parameter"}), 400
+        
+        # Use client-aware chat without specific client context
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
-            result = loop.run_until_complete(rag_engine.search_documents(query, overrides))
+            result = loop.run_until_complete(
+                rag_engine.client_aware_chat(
+                    messages=messages,
+                    client_context=None,  # No specific client
+                    pm_context=None,      # No specific PM
+                    session_id=session_id
+                )
+            )
         finally:
             loop.close()
-            
+        
         return jsonify(result)
         
     except Exception as e:
+        print(f"Old chat error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    print("🚀 Enhanced RAG API Server Starting...")
+    print("\n🚀 Client-Aware RAG API Server Starting...")
     print("✅ Environment loaded")
-    print("🌐 Health: http://localhost:5001/api/health")
+    print("🔍 Client filtering enabled")
+    print("👥 PM filtering enabled") 
+    print("📂 Category filtering enabled")
+    print("\n🌐 API Endpoints:")
+    print("   Health:     http://localhost:5001/api/health")
+    print("   Chat:       POST http://localhost:5001/api/chat")
+    print("   Search:     POST http://localhost:5001/api/search")
+    print("   Clients:    GET  http://localhost:5001/api/clients")
+    print("   Suggestions: POST http://localhost:5001/api/search/suggestions")
+    print("\n📋 New Features:")
+    print("   • Auto-detect clients from queries")
+    print("   • Filter by client_name, pm_initial, document_category") 
+    print("   • Client-aware response generation")
+    print("   • Enhanced search with metadata filtering")
+    
     app.run(debug=True, host='0.0.0.0', port=5001)
