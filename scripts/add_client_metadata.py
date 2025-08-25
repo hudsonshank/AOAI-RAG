@@ -57,7 +57,8 @@ class ClientMetadataIndexUpdater:
             
             required_fields = {
                 'client_name',
-                'pm_initial', 
+                'pm_initial',
+                'pm_name', 
                 'document_category',
                 'is_client_specific',
                 'metadata_updated_timestamp'
@@ -98,6 +99,13 @@ class ClientMetadataIndexUpdater:
                     type=SearchFieldDataType.String,
                     filterable=True,
                     facetable=True
+                ),
+                SimpleField(
+                    name="pm_name", 
+                    type=SearchFieldDataType.String,
+                    filterable=True,
+                    facetable=True,
+                    searchable=True
                 ),
                 SearchableField(
                     name="document_category",
@@ -203,6 +211,7 @@ class ClientMetadataIndexUpdater:
                     "chunk_id": doc['chunk_id'],
                     "client_name": client_info.client_name,
                     "pm_initial": client_info.pm_initial,
+                    "pm_name": client_info.pm_name,
                     "document_category": client_info.document_category,
                     "is_client_specific": client_info.is_client_specific,
                     "metadata_updated_timestamp": timestamp
@@ -254,7 +263,7 @@ class ClientMetadataIndexUpdater:
             # Search for documents with client metadata
             results = list(self.search_client.search(
                 "*",
-                select=["client_name", "pm_initial", "document_category", "is_client_specific"],
+                select=["client_name", "pm_initial", "pm_name", "document_category", "is_client_specific"],
                 top=1000
             ))
             
@@ -265,6 +274,7 @@ class ClientMetadataIndexUpdater:
                 client_info = ClientInfo(
                     client_name=result.get('client_name', 'Unknown'),
                     pm_initial=result.get('pm_initial', 'N/A'),
+                    pm_name=result.get('pm_name', 'N/A'),
                     folder_path="",  # Not needed for stats
                     is_client_specific=result.get('is_client_specific', False),
                     document_category=result.get('document_category', 'general')
