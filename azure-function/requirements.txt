@@ -1,0 +1,9 @@
+azure-functions
+azure-storage-blob
+azure-keyvault-secrets
+azure-identity
+azure-ai-formrecognizer
+azure-core
+requests
+python-pptx
+openpyxl
