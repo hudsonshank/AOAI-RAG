@@ -2,20 +2,20 @@
 
 A sophisticated Retrieval-Augmented Generation (RAG) system built on Azure OpenAI and Azure AI Search, designed to provide intelligent document search and conversational AI capabilities for enterprise knowledge management.
 
-## 🌟 Features
+## Features
 
-- **🧠 Advanced RAG Engine**: Multi-step reasoning with intelligent query optimization
-- **🔍 Hybrid Search**: Combines text and vector search with semantic ranking
-- **💬 Multi-turn Conversations**: Context-aware chat with conversation memory
-- **📚 Smart Citations**: Transparent source attribution with confidence scores
-- **🏷️ Enhanced Metadata**: Rich document categorization and filtering
-- **⚡ Streaming Responses**: Real-time chat experience
-- **🔒 PII Detection**: Automatic sensitive information filtering
-- **📈 Scalable Architecture**: From development to enterprise deployment
+- **Advanced RAG Engine**: Multi-step reasoning with intelligent query optimization
+- **Hybrid Search**: Combines text and vector search with semantic ranking
+- **Multi-turn Conversations**: Context-aware chat with conversation memory
+- **Smart Citations**: Transparent source attribution with confidence scores
+- **Enhanced Metadata**: Rich document categorization and filtering
+- **Streaming Responses**: Real-time chat experience
+- **PII Detection**: Automatic sensitive information filtering
+- **Scalable Architecture**: From development to enterprise deployment
 
-## 🎯 Current Status
+## Current Status
 
-**Phase 1: Foundation** ✅ *In Progress*
+**Phase 1: Foundation** *In Progress*
 - [x] Repository structure
 - [x] Basic configuration
 - [ ] Simple RAG engine with existing index
@@ -34,7 +34,7 @@ A sophisticated Retrieval-Augmented Generation (RAG) system built on Azure OpenA
 - [ ] Deployment automation
 - [ ] Monitoring and logging
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -50,7 +50,7 @@ A sophisticated Retrieval-Augmented Generation (RAG) system built on Azure OpenA
                        └─────────────────┘
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Python 3.9+
@@ -95,13 +95,13 @@ python src/api/app.py
 # API will be available at http://localhost:5000
 ```
 
-## 📊 Current Index Status
+## Current Index Status
 
 **Existing Index**: `jennifur-rag`
-- ✅ 9,404+ documents indexed
-- ✅ Vector search enabled (1536 dimensions)
-- ✅ Semantic search configured
-- ✅ Ready for advanced RAG
+- 9,404+ documents indexed
+- Vector search enabled (1536 dimensions)
+- Semantic search configured
+- Ready for advanced RAG
 
 **Index Fields Available**:
 - `chunk` - Document content
@@ -153,7 +153,7 @@ AOAI-RAG/
 └── azure-function/        # Integration with existing function
 ```
 
-## 📚 Documentation
+## Documentation
 
 - [Setup Guide](docs/setup.md) - Detailed installation instructions
 - [API Documentation](docs/api.md) - Complete API reference
@@ -161,7 +161,7 @@ AOAI-RAG/
 - [Deployment Guide](docs/deployment.md) - Production deployment
 - [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Run all tests
@@ -175,14 +175,14 @@ pytest tests/unit/          # Unit tests
 pytest tests/integration/   # Integration tests
 ```
 
-## 📈 Performance Targets
+## Performance Targets
 
 - **Search Latency**: <200ms for typical queries
 - **Chat Response**: <2s for complex questions  
 - **Throughput**: 100+ concurrent users
 - **Accuracy**: 90%+ citation accuracy
 
-## 🔒 Security Features
+## Security Features
 
 - Environment-based configuration
 - PII detection and filtering
@@ -190,7 +190,7 @@ pytest tests/integration/   # Integration tests
 - Input validation and sanitization
 - Secure Azure service integration
 
-## 🤝 Contributing
+## Contributing
 
 1. Create a feature branch (`git checkout -b feature/your-feature`)
 2. Make your changes
@@ -200,22 +200,22 @@ pytest tests/integration/   # Integration tests
 6. Push to the branch (`git push origin feature/your-feature`)
 7. Create a Pull Request
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## Support
 
-- 📖 Check the [documentation](docs/)
-- 🐛 Report issues on [GitHub Issues](https://github.com/your-username/AOAI-RAG/issues)
-- 💬 Join discussions in [GitHub Discussions](https://github.com/your-username/AOAI-RAG/discussions)
+- Check the [documentation](docs/)
+- Report issues on [GitHub Issues](https://github.com/your-username/AOAI-RAG/issues)
+- Join discussions in [GitHub Discussions](https://github.com/your-username/AOAI-RAG/discussions)
 
 ---
 
-**🚀 Ready to get started?** 
+**Ready to get started?** 
 
 1. Copy `.env.example` to `.env` and add your Azure credentials
 2. Run `python scripts/test_basic_rag.py` to test your existing setup
 3. Follow the [Setup Guide](docs/setup.md) for detailed instructions
 
-**Current Status**: Testing basic functionality with existing 9,404 documents ✨
+**Current Status**: Testing basic functionality with existing 9,404 documents
