@@ -22,13 +22,13 @@ A sophisticated Retrieval-Augmented Generation (RAG) system built on Azure OpenA
 - [ ] Basic API endpoints
 - [ ] Frontend integration
 
-**Phase 2: Enhanced Features** 🔄 *Coming Next*
+**Phase 2: Enhanced Features** *Coming Next*
 - [ ] Advanced query optimization
 - [ ] Enhanced document processing
 - [ ] Rich metadata extraction
 - [ ] Improved chunking strategies
 
-**Phase 3: Production Ready** 📋 *Planned*
+**Phase 3: Production Ready** *Planned*
 - [ ] Comprehensive testing
 - [ ] Performance optimization
 - [ ] Deployment automation
@@ -137,7 +137,7 @@ python scripts/migrate_documents.py
 pytest tests/
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 AOAI-RAG/
@@ -218,4 +218,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 2. Run `python scripts/test_basic_rag.py` to test your existing setup
 3. Follow the [Setup Guide](docs/setup.md) for detailed instructions
 
-**Current Status**: Testing basic functionality with existing 9,404 documents
+**Current Status**: Testing basic functionality with existing 15,000+ documents
