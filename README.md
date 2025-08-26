@@ -1,4 +1,4 @@
-# 🤖 AOAI-RAG - Advanced Azure OpenAI RAG System
+# AOAI-RAG - Advanced Azure OpenAI RAG System
 
 A sophisticated Retrieval-Augmented Generation (RAG) system built on Azure OpenAI and Azure AI Search, designed to provide intelligent document search and conversational AI capabilities for enterprise knowledge management.
 
