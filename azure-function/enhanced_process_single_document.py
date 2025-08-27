@@ -189,6 +189,44 @@ class DocumentChunker:
         
         return chunks
 
+    def chunk_excel_document(self, excel_data: Dict[str, Any], metadata: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Create separate chunks for each Excel sheet"""
+        if excel_data.get("type") != "excel_sheets":
+            logging.warning(f"Invalid Excel data type: {excel_data.get('type')}")
+            return []
+        
+        chunks = []
+        sheet_index = 0
+        
+        for sheet_name, sheet_content in excel_data["sheets"].items():
+            if not sheet_content or len(sheet_content.strip()) < self.min_chunk_size:
+                continue
+            
+            # Create metadata for this sheet
+            sheet_metadata = {
+                **metadata,
+                "sheet_name": sheet_name,
+                "sheet_index": sheet_index,
+                "is_excel_sheet": True,
+                "excel_sheet_count": excel_data["total_sheets"]
+            }
+            
+            # Create chunk for this sheet
+            chunk = {
+                "chunk": sheet_content.strip(),
+                "chunk_id": f"{metadata['document_id']}_sheet_{sheet_index}",
+                "parent_id": metadata['document_id'],
+                "chunk_index": sheet_index,
+                "chunk_type": "excel_sheet",
+                **sheet_metadata
+            }
+            
+            chunks.append(chunk)
+            sheet_index += 1
+        
+        logging.info(f"Created {len(chunks)} sheet-based chunks for Excel file")
+        return chunks
+
 @app.route(route="ProcessSingleDocument", methods=["POST"])
 def process_single_document(req: func.HttpRequest) -> func.HttpResponse:
     """
@@ -463,48 +501,100 @@ class EnhancedDocumentProcessor:
             # Extract text content
             extracted_content = self._extract_text_content(doc_content, doc_extension, doc_name)
             
-            if not extracted_content or len(extracted_content.strip()) < 50:
-                return {
-                    "action": "skipped",
-                    "reason": "no_extractable_content",
-                    "path": doc_path,
-                    "extension": doc_extension
-                }
-            
             # Extract client metadata
             client_info = self.client_extractor.extract_client_info(full_doc_path)
             
-            # Create enhanced metadata
-            enhanced_metadata = {
-                "id": doc_id,
-                "name": doc_name,
-                "document_path": full_doc_path,
-                "filename": doc_name,
-                "size": doc_size,
-                "extension": doc_extension,
-                "processed_timestamp": datetime.datetime.utcnow().isoformat(),
-                "status": "ready_for_rag",
+            # Handle Excel files differently - they return structured data
+            if doc_extension.lower() in ['.xlsx', '.xls'] and isinstance(extracted_content, dict):
+                if extracted_content.get("type") == "excel_sheets":
+                    # Use Excel-specific chunking for sheet-based processing
+                    chunks = self.chunker.chunk_excel_document(extracted_content, {
+                        "id": doc_id,
+                        "name": doc_name,
+                        "document_path": full_doc_path,
+                        "filename": doc_name,
+                        "size": doc_size,
+                        "extension": doc_extension,
+                        "processed_timestamp": datetime.datetime.utcnow().isoformat(),
+                        "status": "ready_for_rag",
+                        "client_name": client_info["client_name"],
+                        "pm_initial": client_info["pm_initial"],
+                        "pm_name": client_info["pm_name"],
+                        "document_category": client_info["document_category"],
+                        "is_client_specific": client_info["is_client_specific"],
+                        "processing_method": "excel_sheet_extraction",
+                        "folder_depth": len([p for p in full_doc_path.split('/') if p]),
+                        "file_extension": doc_extension.lower()
+                    })
+                    
+                    # Calculate content length from all sheets
+                    total_content_length = sum(len(content) for content in extracted_content["sheets"].values())
+                    enhanced_metadata = {
+                        "id": doc_id,
+                        "name": doc_name,
+                        "document_path": full_doc_path,
+                        "filename": doc_name,
+                        "size": doc_size,
+                        "extension": doc_extension,
+                        "processed_timestamp": datetime.datetime.utcnow().isoformat(),
+                        "status": "ready_for_rag",
+                        "client_name": client_info["client_name"],
+                        "pm_initial": client_info["pm_initial"],
+                        "pm_name": client_info["pm_name"],
+                        "document_category": client_info["document_category"],
+                        "is_client_specific": client_info["is_client_specific"],
+                        "content_length": total_content_length,
+                        "word_count": sum(len(content.split()) for content in extracted_content["sheets"].values()),
+                        "character_count": total_content_length,
+                        "processing_method": "excel_sheet_extraction",
+                        "folder_depth": len([p for p in full_doc_path.split('/') if p]),
+                        "file_extension": doc_extension.lower(),
+                        "excel_sheet_count": extracted_content["total_sheets"]
+                    }
+                else:
+                    # Excel extraction failed, skip
+                    return {
+                        "action": "skipped",
+                        "reason": "excel_extraction_failed",
+                        "path": doc_path,
+                        "extension": doc_extension,
+                        "error": extracted_content.get("error", "Unknown Excel error")
+                    }
+            else:
+                # Handle regular text-based documents
+                if not extracted_content or len(extracted_content.strip()) < 50:
+                    return {
+                        "action": "skipped",
+                        "reason": "no_extractable_content",
+                        "path": doc_path,
+                        "extension": doc_extension
+                    }
                 
-                # Client metadata
-                "client_name": client_info["client_name"],
-                "pm_initial": client_info["pm_initial"],
-                "pm_name": client_info["pm_name"],
-                "document_category": client_info["document_category"],
-                "is_client_specific": client_info["is_client_specific"],
+                # Create enhanced metadata for regular documents
+                enhanced_metadata = {
+                    "id": doc_id,
+                    "name": doc_name,
+                    "document_path": full_doc_path,
+                    "filename": doc_name,
+                    "size": doc_size,
+                    "extension": doc_extension,
+                    "processed_timestamp": datetime.datetime.utcnow().isoformat(),
+                    "status": "ready_for_rag",
+                    "client_name": client_info["client_name"],
+                    "pm_initial": client_info["pm_initial"],
+                    "pm_name": client_info["pm_name"],
+                    "document_category": client_info["document_category"],
+                    "is_client_specific": client_info["is_client_specific"],
+                    "content_length": len(extracted_content),
+                    "word_count": len(extracted_content.split()),
+                    "character_count": len(extracted_content),
+                    "processing_method": "azure_document_intelligence",
+                    "folder_depth": len([p for p in full_doc_path.split('/') if p]),
+                    "file_extension": doc_extension.lower()
+                }
                 
-                # Content metadata
-                "content_length": len(extracted_content),
-                "word_count": len(extracted_content.split()),
-                "character_count": len(extracted_content),
-                
-                # Processing metadata
-                "processing_method": "azure_document_intelligence",
-                "folder_depth": len([p for p in full_doc_path.split('/') if p]),
-                "file_extension": doc_extension.lower()
-            }
-            
-            # Chunk document for RAG
-            chunks = self.chunker.chunk_document(extracted_content, enhanced_metadata)
+                # Chunk document for RAG using regular chunking
+                chunks = self.chunker.chunk_document(extracted_content, enhanced_metadata)
             
             if not chunks:
                 return {
@@ -525,6 +615,15 @@ class EnhancedDocumentProcessor:
             
             processing_time = (datetime.datetime.utcnow() - processing_start).total_seconds()
             
+            # Calculate content length based on document type
+            if doc_extension.lower() in ['.xlsx', '.xls'] and isinstance(extracted_content, dict):
+                if extracted_content.get("type") == "excel_sheets":
+                    content_length = sum(len(content) for content in extracted_content["sheets"].values())
+                else:
+                    content_length = 0
+            else:
+                content_length = len(extracted_content) if extracted_content else 0
+            
             result = {
                 "action": "processed",
                 "path": doc_path,
@@ -534,9 +633,18 @@ class EnhancedDocumentProcessor:
                 "document_category": client_info["document_category"],
                 "chunks_created": len(chunks),
                 "chunks_stored": stored_chunks,
-                "content_length": len(extracted_content),
-                "processing_time_seconds": processing_time
+                "content_length": content_length,
+                "processing_time_seconds": processing_time,
+                "processing_method": enhanced_metadata.get("processing_method", "standard")
             }
+            
+            # Add Excel-specific information if applicable
+            if doc_extension.lower() in ['.xlsx', '.xls'] and isinstance(extracted_content, dict):
+                if extracted_content.get("type") == "excel_sheets":
+                    result.update({
+                        "excel_sheets_processed": extracted_content["total_sheets"],
+                        "sheet_names": extracted_content["sheet_names"]
+                    })
             
             logging.info(f'Successfully processed {doc_name}: {stored_chunks} chunks stored')
             return result
@@ -584,6 +692,13 @@ class EnhancedDocumentProcessor:
                 "file_extension": chunk_data["file_extension"],
                 "folder_depth": chunk_data["folder_depth"],
                 "processing_method": chunk_data.get("processing_method", "enhanced"),
+                
+                # Excel-specific metadata (if applicable)
+                "chunk_type": chunk_data.get("chunk_type", "standard"),
+                "sheet_name": chunk_data.get("sheet_name"),
+                "sheet_index": chunk_data.get("sheet_index"),
+                "is_excel_sheet": chunk_data.get("is_excel_sheet", False),
+                "excel_sheet_count": chunk_data.get("excel_sheet_count"),
                 
                 # Full metadata for reference
                 "metadata": {
@@ -728,26 +843,79 @@ class EnhancedDocumentProcessor:
             logging.error(f'Document Intelligence extraction failed: {str(e)}')
             return ""
 
-    def _extract_from_excel(self, doc_content: bytes) -> str:
-        """Extract text from Excel files"""
+    def _extract_from_excel(self, doc_content: bytes) -> Dict[str, Any]:
+        """Extract text from Excel files with visible text and sheet-based structure"""
         try:
-            workbook = openpyxl.load_workbook(BytesIO(doc_content), read_only=True)
-            content = []
+            workbook = openpyxl.load_workbook(BytesIO(doc_content), read_only=True, data_only=True)
+            sheets_data = {}
             
             for sheet_name in workbook.sheetnames:
                 sheet = workbook[sheet_name]
-                content.append(f"Sheet: {sheet_name}")
+                sheet_content = []
                 
-                for row in sheet.iter_rows(values_only=True):
-                    row_text = " ".join([str(cell) for cell in row if cell is not None])
-                    if row_text.strip():
-                        content.append(row_text)
+                # Add sheet header
+                sheet_content.append(f"Sheet: {sheet_name}")
+                
+                # Process each row
+                for row_num, row in enumerate(sheet.iter_rows(), 1):
+                    row_cells = []
+                    
+                    for col_num, cell in enumerate(row, 1):
+                        if cell is not None:
+                            # Get the displayed value (not formula)
+                            cell_value = cell.value
+                            
+                            # Handle different data types
+                            if cell_value is not None:
+                                if isinstance(cell_value, (int, float)):
+                                    # Format numbers appropriately
+                                    if isinstance(cell_value, int):
+                                        cell_text = str(cell_value)
+                                    else:
+                                        # Format floats to avoid excessive decimals
+                                        cell_text = f"{cell_value:.2f}".rstrip('0').rstrip('.')
+                                elif isinstance(cell_value, datetime.datetime):
+                                    # Format dates consistently
+                                    cell_text = cell_value.strftime("%Y-%m-%d %H:%M:%S")
+                                elif isinstance(cell_value, datetime.date):
+                                    cell_text = cell_value.strftime("%Y-%m-%d")
+                                elif isinstance(cell_value, datetime.time):
+                                    cell_text = cell_value.strftime("%H:%M:%S")
+                                else:
+                                    cell_text = str(cell_value).strip()
+                                
+                                # Only add non-empty cells
+                                if cell_text and cell_text != "None":
+                                    row_cells.append(cell_text)
+                    
+                    # Only add rows with content
+                    if row_cells:
+                        row_text = " | ".join(row_cells)
+                        sheet_content.append(f"Row {row_num}: {row_text}")
+                
+                # Store sheet content
+                if len(sheet_content) > 1:  # More than just the sheet header
+                    sheets_data[sheet_name] = "\n".join(sheet_content)
             
-            return "\n".join(content)
+            workbook.close()
+            
+            # Return structured data for sheet-based chunking
+            return {
+                "type": "excel_sheets",
+                "sheets": sheets_data,
+                "total_sheets": len(sheets_data),
+                "sheet_names": list(sheets_data.keys())
+            }
             
         except Exception as e:
             logging.error(f'Excel extraction failed: {str(e)}')
-            return ""
+            return {
+                "type": "excel_error",
+                "error": str(e),
+                "sheets": {},
+                "total_sheets": 0,
+                "sheet_names": []
+            }
 
     def _extract_from_powerpoint(self, doc_content: bytes) -> str:
         """Extract text from PowerPoint files"""

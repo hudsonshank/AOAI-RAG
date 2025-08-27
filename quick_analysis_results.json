@@ -1,0 +1,72 @@
+{
+  "sample_size": 500,
+  "total_analyzed": 500,
+  "old_format_count": 229,
+  "new_format_count": 271,
+  "corrupted_count": 0,
+  "old_format_examples": [
+    {
+      "blob_name": "01ARPAAMA2OEV7RAJXRBL5MYRKBIJU4IG7.json",
+      "filename": "Rock the Recession_Owners Manual_Sample Pages c.pdf",
+      "document_path": "/TO SORT/Rock the Recession Assets/Rock the Recession_Owners Manual_Sample Pages c.pdf",
+      "last_modified": "2025-07-18T17:31:21+00:00"
+    },
+    {
+      "blob_name": "01ARPAAMA5FBAHZDRJNNMQDIG7PNVMMKDG.json",
+      "filename": "In Person_Quarterly Handouts_v4.pdf",
+      "document_path": "/TO SORT/Traction Handouts/In Person/In Person_Quarterly Handouts_v4.pdf",
+      "last_modified": "2025-07-18T17:33:04+00:00"
+    },
+    {
+      "blob_name": "01ARPAAMA6UM67WATKXVO7UWBTIZTV6K77.json",
+      "filename": "Slain, Jonathan - 88192 - Cards.pdf",
+      "document_path": "/ARCHIVE [DO NOT USE]/Slain, Jonathan - 88192 - Cards.pdf",
+      "last_modified": "2025-07-17T14:33:58+00:00"
+    },
+    {
+      "blob_name": "01ARPAAMA73SW7B5ZCD5KEBGKVTB6JKPIY.json",
+      "filename": "Marshmallow Challenge_2020_draft_2.pdf",
+      "document_path": "/ARCHIVE [DO NOT USE]/Marshmallow Challenge_2020_draft_2.pdf",
+      "last_modified": "2025-07-17T14:32:51+00:00"
+    },
+    {
+      "blob_name": "01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB.json",
+      "filename": "Autobahn Book Club - Dream Manager_draft_2.pdf",
+      "document_path": "/ARCHIVE [DO NOT USE]/Autobahn Book Club - Dream Manager_draft_2.pdf",
+      "last_modified": "2025-07-16T21:01:21+00:00"
+    }
+  ],
+  "new_format_examples": [
+    {
+      "blob_name": "01DA3MWHA4RPPDQZRAGZOYBQ4ZPOIJM33N_0.json",
+      "filename": "TrentHancockworkingwithSharonBakerULPUP0AU8U1IZ4EVE0E4AEE0Va.pdf",
+      "client_name": "Camelot",
+      "chunk_id": "01DA3MWHA4RPPDQZRAGZOYBQ4ZPOIJM33N_0"
+    },
+    {
+      "blob_name": "01DA3MWHA4RPPDQZRAGZOYBQ4ZPOIJM33N_1.json",
+      "filename": "TrentHancockworkingwithSharonBakerULPUP0AU8U1IZ4EVE0E4AEE0Va.pdf",
+      "client_name": "Camelot",
+      "chunk_id": "01DA3MWHA4RPPDQZRAGZOYBQ4ZPOIJM33N_1"
+    },
+    {
+      "blob_name": "01DA3MWHA4RPPDQZRAGZOYBQ4ZPOIJM33N_10.json",
+      "filename": "TrentHancockworkingwithSharonBakerULPUP0AU8U1IZ4EVE0E4AEE0Va.pdf",
+      "client_name": "Camelot",
+      "chunk_id": "01DA3MWHA4RPPDQZRAGZOYBQ4ZPOIJM33N_10"
+    },
+    {
+      "blob_name": "01DA3MWHA4RPPDQZRAGZOYBQ4ZPOIJM33N_11.json",
+      "filename": "TrentHancockworkingwithSharonBakerULPUP0AU8U1IZ4EVE0E4AEE0Va.pdf",
+      "client_name": "Camelot",
+      "chunk_id": "01DA3MWHA4RPPDQZRAGZOYBQ4ZPOIJM33N_11"
+    },
+    {
+      "blob_name": "01DA3MWHA4RPPDQZRAGZOYBQ4ZPOIJM33N_12.json",
+      "filename": "TrentHancockworkingwithSharonBakerULPUP0AU8U1IZ4EVE0E4AEE0Va.pdf",
+      "client_name": "Camelot",
+      "chunk_id": "01DA3MWHA4RPPDQZRAGZOYBQ4ZPOIJM33N_12"
+    }
+  ],
+  "timestamp": "2025-08-26T17:43:56.940845"
+}

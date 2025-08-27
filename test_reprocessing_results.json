@@ -1,0 +1,522 @@
+{
+  "total_documents": 25,
+  "successful": 25,
+  "failed": 0,
+  "skipped": 0,
+  "processing_results": [
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMA2OEV7RAJXRBL5MYRKBIJU4IG7.json",
+      "chunks_created": 13,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMA2OEV7RAJXRBL5MYRKBIJU4IG7_0.json",
+        "TEST_TEST_01ARPAAMA2OEV7RAJXRBL5MYRKBIJU4IG7_1.json",
+        "TEST_TEST_01ARPAAMA2OEV7RAJXRBL5MYRKBIJU4IG7_2.json",
+        "TEST_TEST_01ARPAAMA2OEV7RAJXRBL5MYRKBIJU4IG7_3.json",
+        "TEST_TEST_01ARPAAMA2OEV7RAJXRBL5MYRKBIJU4IG7_4.json",
+        "TEST_TEST_01ARPAAMA2OEV7RAJXRBL5MYRKBIJU4IG7_5.json",
+        "TEST_TEST_01ARPAAMA2OEV7RAJXRBL5MYRKBIJU4IG7_6.json",
+        "TEST_TEST_01ARPAAMA2OEV7RAJXRBL5MYRKBIJU4IG7_7.json",
+        "TEST_TEST_01ARPAAMA2OEV7RAJXRBL5MYRKBIJU4IG7_8.json",
+        "TEST_TEST_01ARPAAMA2OEV7RAJXRBL5MYRKBIJU4IG7_9.json",
+        "TEST_TEST_01ARPAAMA2OEV7RAJXRBL5MYRKBIJU4IG7_10.json",
+        "TEST_TEST_01ARPAAMA2OEV7RAJXRBL5MYRKBIJU4IG7_11.json",
+        "TEST_TEST_01ARPAAMA2OEV7RAJXRBL5MYRKBIJU4IG7_12.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMA5FBAHZDRJNNMQDIG7PNVMMKDG.json",
+      "chunks_created": 4,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMA5FBAHZDRJNNMQDIG7PNVMMKDG_0.json",
+        "TEST_TEST_01ARPAAMA5FBAHZDRJNNMQDIG7PNVMMKDG_1.json",
+        "TEST_TEST_01ARPAAMA5FBAHZDRJNNMQDIG7PNVMMKDG_2.json",
+        "TEST_TEST_01ARPAAMA5FBAHZDRJNNMQDIG7PNVMMKDG_3.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "meetings"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMA6UM67WATKXVO7UWBTIZTV6K77.json",
+      "chunks_created": 8,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMA6UM67WATKXVO7UWBTIZTV6K77_0.json",
+        "TEST_TEST_01ARPAAMA6UM67WATKXVO7UWBTIZTV6K77_1.json",
+        "TEST_TEST_01ARPAAMA6UM67WATKXVO7UWBTIZTV6K77_2.json",
+        "TEST_TEST_01ARPAAMA6UM67WATKXVO7UWBTIZTV6K77_3.json",
+        "TEST_TEST_01ARPAAMA6UM67WATKXVO7UWBTIZTV6K77_4.json",
+        "TEST_TEST_01ARPAAMA6UM67WATKXVO7UWBTIZTV6K77_5.json",
+        "TEST_TEST_01ARPAAMA6UM67WATKXVO7UWBTIZTV6K77_6.json",
+        "TEST_TEST_01ARPAAMA6UM67WATKXVO7UWBTIZTV6K77_7.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "archived"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMA73SW7B5ZCD5KEBGKVTB6JKPIY.json",
+      "chunks_created": 8,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMA73SW7B5ZCD5KEBGKVTB6JKPIY_0.json",
+        "TEST_TEST_01ARPAAMA73SW7B5ZCD5KEBGKVTB6JKPIY_1.json",
+        "TEST_TEST_01ARPAAMA73SW7B5ZCD5KEBGKVTB6JKPIY_2.json",
+        "TEST_TEST_01ARPAAMA73SW7B5ZCD5KEBGKVTB6JKPIY_3.json",
+        "TEST_TEST_01ARPAAMA73SW7B5ZCD5KEBGKVTB6JKPIY_4.json",
+        "TEST_TEST_01ARPAAMA73SW7B5ZCD5KEBGKVTB6JKPIY_5.json",
+        "TEST_TEST_01ARPAAMA73SW7B5ZCD5KEBGKVTB6JKPIY_6.json",
+        "TEST_TEST_01ARPAAMA73SW7B5ZCD5KEBGKVTB6JKPIY_7.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "archived"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB.json",
+      "chunks_created": 22,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_0.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_1.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_2.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_3.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_4.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_5.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_6.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_7.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_8.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_9.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_10.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_11.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_12.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_13.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_14.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_15.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_16.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_17.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_18.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_19.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_20.json",
+        "TEST_TEST_01ARPAAMA7HWVMOQDDZ5OTVD4VUOYWGBLB_21.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "archived"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAAUAXYBWJQRZLHJILUTEK4KQVC.json",
+      "chunks_created": 12,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAAUAXYBWJQRZLHJILUTEK4KQVC_0.json",
+        "TEST_TEST_01ARPAAMAAUAXYBWJQRZLHJILUTEK4KQVC_1.json",
+        "TEST_TEST_01ARPAAMAAUAXYBWJQRZLHJILUTEK4KQVC_2.json",
+        "TEST_TEST_01ARPAAMAAUAXYBWJQRZLHJILUTEK4KQVC_3.json",
+        "TEST_TEST_01ARPAAMAAUAXYBWJQRZLHJILUTEK4KQVC_4.json",
+        "TEST_TEST_01ARPAAMAAUAXYBWJQRZLHJILUTEK4KQVC_5.json",
+        "TEST_TEST_01ARPAAMAAUAXYBWJQRZLHJILUTEK4KQVC_6.json",
+        "TEST_TEST_01ARPAAMAAUAXYBWJQRZLHJILUTEK4KQVC_7.json",
+        "TEST_TEST_01ARPAAMAAUAXYBWJQRZLHJILUTEK4KQVC_8.json",
+        "TEST_TEST_01ARPAAMAAUAXYBWJQRZLHJILUTEK4KQVC_9.json",
+        "TEST_TEST_01ARPAAMAAUAXYBWJQRZLHJILUTEK4KQVC_10.json",
+        "TEST_TEST_01ARPAAMAAUAXYBWJQRZLHJILUTEK4KQVC_11.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "archived"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAAVW3VZZWDDZNV3LCJYVPYK7DK.json",
+      "chunks_created": 1,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAAVW3VZZWDDZNV3LCJYVPYK7DK_0.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "behavioral"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR.json",
+      "chunks_created": 20,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_0.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_1.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_2.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_3.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_4.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_5.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_6.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_7.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_8.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_9.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_10.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_11.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_12.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_13.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_14.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_15.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_16.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_17.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_18.json",
+        "TEST_TEST_01ARPAAMABF6QUYUKOWBKNOOY3CWH2ZRQR_19.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMACISC6ZFRV5VH3ARBUJXDMQSZH.json",
+      "chunks_created": 9,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMACISC6ZFRV5VH3ARBUJXDMQSZH_0.json",
+        "TEST_TEST_01ARPAAMACISC6ZFRV5VH3ARBUJXDMQSZH_1.json",
+        "TEST_TEST_01ARPAAMACISC6ZFRV5VH3ARBUJXDMQSZH_2.json",
+        "TEST_TEST_01ARPAAMACISC6ZFRV5VH3ARBUJXDMQSZH_3.json",
+        "TEST_TEST_01ARPAAMACISC6ZFRV5VH3ARBUJXDMQSZH_4.json",
+        "TEST_TEST_01ARPAAMACISC6ZFRV5VH3ARBUJXDMQSZH_5.json",
+        "TEST_TEST_01ARPAAMACISC6ZFRV5VH3ARBUJXDMQSZH_6.json",
+        "TEST_TEST_01ARPAAMACISC6ZFRV5VH3ARBUJXDMQSZH_7.json",
+        "TEST_TEST_01ARPAAMACISC6ZFRV5VH3ARBUJXDMQSZH_8.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Uncategorized",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAF6AW44P6VA5K6E5CUUGCZCSM2.json",
+      "chunks_created": 8,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAF6AW44P6VA5K6E5CUUGCZCSM2_0.json",
+        "TEST_TEST_01ARPAAMAF6AW44P6VA5K6E5CUUGCZCSM2_1.json",
+        "TEST_TEST_01ARPAAMAF6AW44P6VA5K6E5CUUGCZCSM2_2.json",
+        "TEST_TEST_01ARPAAMAF6AW44P6VA5K6E5CUUGCZCSM2_3.json",
+        "TEST_TEST_01ARPAAMAF6AW44P6VA5K6E5CUUGCZCSM2_4.json",
+        "TEST_TEST_01ARPAAMAF6AW44P6VA5K6E5CUUGCZCSM2_5.json",
+        "TEST_TEST_01ARPAAMAF6AW44P6VA5K6E5CUUGCZCSM2_6.json",
+        "TEST_TEST_01ARPAAMAF6AW44P6VA5K6E5CUUGCZCSM2_7.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAFQXMCMBHFFVNYLSM2MSRGW462.json",
+      "chunks_created": 12,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAFQXMCMBHFFVNYLSM2MSRGW462_0.json",
+        "TEST_TEST_01ARPAAMAFQXMCMBHFFVNYLSM2MSRGW462_1.json",
+        "TEST_TEST_01ARPAAMAFQXMCMBHFFVNYLSM2MSRGW462_2.json",
+        "TEST_TEST_01ARPAAMAFQXMCMBHFFVNYLSM2MSRGW462_3.json",
+        "TEST_TEST_01ARPAAMAFQXMCMBHFFVNYLSM2MSRGW462_4.json",
+        "TEST_TEST_01ARPAAMAFQXMCMBHFFVNYLSM2MSRGW462_5.json",
+        "TEST_TEST_01ARPAAMAFQXMCMBHFFVNYLSM2MSRGW462_6.json",
+        "TEST_TEST_01ARPAAMAFQXMCMBHFFVNYLSM2MSRGW462_7.json",
+        "TEST_TEST_01ARPAAMAFQXMCMBHFFVNYLSM2MSRGW462_8.json",
+        "TEST_TEST_01ARPAAMAFQXMCMBHFFVNYLSM2MSRGW462_9.json",
+        "TEST_TEST_01ARPAAMAFQXMCMBHFFVNYLSM2MSRGW462_10.json",
+        "TEST_TEST_01ARPAAMAFQXMCMBHFFVNYLSM2MSRGW462_11.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAHDGZ25YKM3RMSMUFBBBHHBIGC.json",
+      "chunks_created": 7,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAHDGZ25YKM3RMSMUFBBBHHBIGC_0.json",
+        "TEST_TEST_01ARPAAMAHDGZ25YKM3RMSMUFBBBHHBIGC_1.json",
+        "TEST_TEST_01ARPAAMAHDGZ25YKM3RMSMUFBBBHHBIGC_2.json",
+        "TEST_TEST_01ARPAAMAHDGZ25YKM3RMSMUFBBBHHBIGC_3.json",
+        "TEST_TEST_01ARPAAMAHDGZ25YKM3RMSMUFBBBHHBIGC_4.json",
+        "TEST_TEST_01ARPAAMAHDGZ25YKM3RMSMUFBBBHHBIGC_5.json",
+        "TEST_TEST_01ARPAAMAHDGZ25YKM3RMSMUFBBBHHBIGC_6.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA.json",
+      "chunks_created": 15,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA_0.json",
+        "TEST_TEST_01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA_1.json",
+        "TEST_TEST_01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA_2.json",
+        "TEST_TEST_01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA_3.json",
+        "TEST_TEST_01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA_4.json",
+        "TEST_TEST_01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA_5.json",
+        "TEST_TEST_01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA_6.json",
+        "TEST_TEST_01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA_7.json",
+        "TEST_TEST_01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA_8.json",
+        "TEST_TEST_01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA_9.json",
+        "TEST_TEST_01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA_10.json",
+        "TEST_TEST_01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA_11.json",
+        "TEST_TEST_01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA_12.json",
+        "TEST_TEST_01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA_13.json",
+        "TEST_TEST_01ARPAAMAJUCTTSX6QCFODN4FAPO2SCOMA_14.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAJXEKOX3DO25NTFVVLOYCOSIBC.json",
+      "chunks_created": 10,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAJXEKOX3DO25NTFVVLOYCOSIBC_0.json",
+        "TEST_TEST_01ARPAAMAJXEKOX3DO25NTFVVLOYCOSIBC_1.json",
+        "TEST_TEST_01ARPAAMAJXEKOX3DO25NTFVVLOYCOSIBC_2.json",
+        "TEST_TEST_01ARPAAMAJXEKOX3DO25NTFVVLOYCOSIBC_3.json",
+        "TEST_TEST_01ARPAAMAJXEKOX3DO25NTFVVLOYCOSIBC_4.json",
+        "TEST_TEST_01ARPAAMAJXEKOX3DO25NTFVVLOYCOSIBC_5.json",
+        "TEST_TEST_01ARPAAMAJXEKOX3DO25NTFVVLOYCOSIBC_6.json",
+        "TEST_TEST_01ARPAAMAJXEKOX3DO25NTFVVLOYCOSIBC_7.json",
+        "TEST_TEST_01ARPAAMAJXEKOX3DO25NTFVVLOYCOSIBC_8.json",
+        "TEST_TEST_01ARPAAMAJXEKOX3DO25NTFVVLOYCOSIBC_9.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "behavioral"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMALGXTVFLV2KVOQ5T2VEPSYHAB2.json",
+      "chunks_created": 2,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMALGXTVFLV2KVOQ5T2VEPSYHAB2_0.json",
+        "TEST_TEST_01ARPAAMALGXTVFLV2KVOQ5T2VEPSYHAB2_1.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAM3EHMQZLKPFK224LGNIX54DLM.json",
+      "chunks_created": 5,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAM3EHMQZLKPFK224LGNIX54DLM_0.json",
+        "TEST_TEST_01ARPAAMAM3EHMQZLKPFK224LGNIX54DLM_1.json",
+        "TEST_TEST_01ARPAAMAM3EHMQZLKPFK224LGNIX54DLM_2.json",
+        "TEST_TEST_01ARPAAMAM3EHMQZLKPFK224LGNIX54DLM_3.json",
+        "TEST_TEST_01ARPAAMAM3EHMQZLKPFK224LGNIX54DLM_4.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAMWSPWIJJRIZKDSEACCAYRX24I.json",
+      "chunks_created": 12,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAMWSPWIJJRIZKDSEACCAYRX24I_0.json",
+        "TEST_TEST_01ARPAAMAMWSPWIJJRIZKDSEACCAYRX24I_1.json",
+        "TEST_TEST_01ARPAAMAMWSPWIJJRIZKDSEACCAYRX24I_2.json",
+        "TEST_TEST_01ARPAAMAMWSPWIJJRIZKDSEACCAYRX24I_3.json",
+        "TEST_TEST_01ARPAAMAMWSPWIJJRIZKDSEACCAYRX24I_4.json",
+        "TEST_TEST_01ARPAAMAMWSPWIJJRIZKDSEACCAYRX24I_5.json",
+        "TEST_TEST_01ARPAAMAMWSPWIJJRIZKDSEACCAYRX24I_6.json",
+        "TEST_TEST_01ARPAAMAMWSPWIJJRIZKDSEACCAYRX24I_7.json",
+        "TEST_TEST_01ARPAAMAMWSPWIJJRIZKDSEACCAYRX24I_8.json",
+        "TEST_TEST_01ARPAAMAMWSPWIJJRIZKDSEACCAYRX24I_9.json",
+        "TEST_TEST_01ARPAAMAMWSPWIJJRIZKDSEACCAYRX24I_10.json",
+        "TEST_TEST_01ARPAAMAMWSPWIJJRIZKDSEACCAYRX24I_11.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAPYAUTCGWK2RJIZUE6ZY3DOJQZ.json",
+      "chunks_created": 6,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAPYAUTCGWK2RJIZUE6ZY3DOJQZ_0.json",
+        "TEST_TEST_01ARPAAMAPYAUTCGWK2RJIZUE6ZY3DOJQZ_1.json",
+        "TEST_TEST_01ARPAAMAPYAUTCGWK2RJIZUE6ZY3DOJQZ_2.json",
+        "TEST_TEST_01ARPAAMAPYAUTCGWK2RJIZUE6ZY3DOJQZ_3.json",
+        "TEST_TEST_01ARPAAMAPYAUTCGWK2RJIZUE6ZY3DOJQZ_4.json",
+        "TEST_TEST_01ARPAAMAPYAUTCGWK2RJIZUE6ZY3DOJQZ_5.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Uncategorized",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAQERCT6CVGVVAZAYDV2QLXWWX2.json",
+      "chunks_created": 1,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAQERCT6CVGVVAZAYDV2QLXWWX2_0.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAS2ONKNFZELNPGAIISTXAGDRJY.json",
+      "chunks_created": 2,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAS2ONKNFZELNPGAIISTXAGDRJY_0.json",
+        "TEST_TEST_01ARPAAMAS2ONKNFZELNPGAIISTXAGDRJY_1.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAUCX64BGHRRRLZL7LA7GN5GX7N.json",
+      "chunks_created": 1,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAUCX64BGHRRRLZL7LA7GN5GX7N_0.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAWMBBHGX2VJZOWFOAKG3XWIDTA.json",
+      "chunks_created": 4,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAWMBBHGX2VJZOWFOAKG3XWIDTA_0.json",
+        "TEST_TEST_01ARPAAMAWMBBHGX2VJZOWFOAKG3XWIDTA_1.json",
+        "TEST_TEST_01ARPAAMAWMBBHGX2VJZOWFOAKG3XWIDTA_2.json",
+        "TEST_TEST_01ARPAAMAWMBBHGX2VJZOWFOAKG3XWIDTA_3.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAXQQA2HMQVBVK2GMB2YI6UAZCO.json",
+      "chunks_created": 1,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAXQQA2HMQVBVK2GMB2YI6UAZCO_0.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP.json",
+      "chunks_created": 27,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_0.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_1.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_2.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_3.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_4.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_5.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_6.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_7.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_8.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_9.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_10.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_11.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_12.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_13.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_14.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_15.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_16.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_17.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_18.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_19.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_20.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_21.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_22.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_23.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_24.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_25.json",
+        "TEST_TEST_01ARPAAMAYCDHFNBR4YNKEMRW5QNNP67BP_26.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    },
+    {
+      "status": "success",
+      "blob_name": "01ARPAAMAYUJWHSHBPAFJTY4IISS6Y77VV.json",
+      "chunks_created": 2,
+      "stored_chunks": [
+        "TEST_TEST_01ARPAAMAYUJWHSHBPAFJTY4IISS6Y77VV_0.json",
+        "TEST_TEST_01ARPAAMAYUJWHSHBPAFJTY4IISS6Y77VV_1.json"
+      ],
+      "enhanced_metadata": {
+        "client_name": "Autobahn Internal",
+        "pm_initial": "N/A",
+        "document_category": "general"
+      }
+    }
+  ],
+  "start_time": "2025-08-26T17:58:59.343166",
+  "end_time": "2025-08-26T17:59:13.584360"
+}
