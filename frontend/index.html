@@ -449,7 +449,7 @@ const hemi = new THREE.HemisphereLight(0xffffff, 0x404060, .9); scene.add(hemi);
 const key = new THREE.DirectionalLight(0xffffff, 2.0); key.position.set(3,5,2); key.castShadow = true; key.shadow.mapSize.set(2048,2048); scene.add(key);
 
 // ground with jennifur-floor.jpg texture
-const floorTexture = textureLoader.load('Assets/jennifur-floor.jpg?' + Date.now());
+const floorTexture = textureLoader.load('./assets/jennifur-floor.jpg?' + Date.now());
 floorTexture.wrapS = THREE.RepeatWrapping;
 floorTexture.wrapT = THREE.RepeatWrapping;
 floorTexture.repeat.set(100, 100); // Much smaller texture, repeated more throughout scene
@@ -2029,7 +2029,7 @@ tailBtn.onclick = ()=>{
   }
 };
 // Meow audio
-const meowAudio = new Audio('jennifur-meow.mp3');
+const meowAudio = new Audio('./assets/jennifur-meow.mp3');
 meowAudio.preload = 'auto';
 if(meowBtn) meowBtn.onclick = ()=>{ 
   meowAudio.currentTime = 0; // Reset to start in case it's already playing
@@ -2037,7 +2037,7 @@ if(meowBtn) meowBtn.onclick = ()=>{
 };
 
 // Purr audio
-const purrAudio = new Audio('jennifur-purr.mp3');
+const purrAudio = new Audio('./assets/jennifur-purr.mp3');
 purrAudio.preload = 'auto';
 
 // New action buttons
@@ -2825,7 +2825,7 @@ addEventListener('resize', ()=>{ renderer.setSize(stage.clientWidth, stage.clien
 async function autoLoadJennifur(){
   try{
     overlay.textContent = 'Loading Jennifur...';
-    const gltf = await loadGLB('jennifur.glb');
+    const gltf = await loadGLB('./assets/jennifur.glb');
     useGLB(gltf);
     console.log('Jennifur loaded successfully!');
   } catch(e){
