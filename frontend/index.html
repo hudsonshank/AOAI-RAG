@@ -1,0 +1,2842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jennifur (Walk + Talk)</title>
+<style>
+  :root{ 
+    --primary: #059669; 
+    --primary-dark: #047857; 
+    --primary-darker: #065f46;
+    --primary-light: #10b981; 
+    --accent: #34d399; 
+    --success: #22c55e; 
+    --dark-surface: #064e3b; 
+    --dark-surface-light: #065f46; 
+    --dark-surface-lighter: #047857; 
+    --chat-surface: #ffffff; 
+    --chat-surface-light: #f9fafb; 
+    --text-dark: #ffffff; 
+    --text-dark-muted: #d1fae5; 
+    --text-chat: #111827; 
+    --text-chat-muted: #6b7280;
+    --border-dark: #059669;
+    --border-light: #e5e7eb;
+    --shadow: rgba(0,0,0,0.3);
+    --shadow-light: rgba(0,0,0,0.15);
+    --shadow-inset: inset 0 1px 0 rgba(255,255,255,0.1);
+    --shadow-button: 0 2px 4px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%; overflow:hidden}
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+  body{margin:0; display:grid; grid-template-rows:auto 1fr auto; background:var(--dark-surface); color:var(--text-dark); font-family:'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size:14px}
+  header{padding:12px 24px; text-align:center; background:linear-gradient(135deg, var(--primary-darker), var(--primary-dark)); border-bottom:2px solid var(--primary); box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+  header h1{margin:0; font-size:clamp(18px,2.5vw,24px); font-weight:700; color:white; text-shadow:0 1px 2px rgba(0,0,0,0.3)}
+  header p{margin:6px 0 0; color:rgba(255,255,255,0.9); font-size:13px; font-weight:400}
+  .wrap{display:grid; grid-template-rows: 1fr auto; gap:12px; padding:12px; height:100vh; position:relative}
+  .stage{position:relative; background:var(--chat-surface-light); border:2px solid var(--border-dark); border-radius:12px; overflow:hidden; box-shadow:0 8px 24px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.1)}
+  canvas{display:block; width:100%; height:100%; border-radius:10px}
+  .panel{background:transparent; border:none; border-radius:0; padding:40px 40px 0 40px; display:flex; justify-content:space-between; align-items:flex-start; gap:20px; height:fit-content; max-height:28vh; overflow:visible; box-shadow:none; position:fixed; top:0; left:0; right:0; width:100%; box-sizing:border-box; z-index:999}
+  
+  /* Floating Chat Overlay */
+  .chat-overlay{position:fixed; bottom:40px; left:50%; transform:translateX(-50%); width:1500px; height:450px; background:var(--chat-surface); border:2px solid var(--primary); border-radius:12px; box-shadow:0 25px 60px rgba(0,0,0,0.8), 0 15px 35px rgba(0,0,0,0.6), 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.9), 0 0 0 1px rgba(5,150,105,0.3); z-index:1000; display:flex; flex-direction:column; backdrop-filter:blur(10px)}
+  .chat-overlay-header{background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:white; padding:12px 16px; border-radius:10px 10px 0 0; font-weight:600; font-size:22px; text-align:center; box-shadow:0 2px 4px rgba(0,0,0,0.2)}
+  .chat-overlay-messages{flex:1; padding:16px; overflow-y:auto; height:350px; background:var(--chat-surface)}
+  .chat-overlay-input{padding:8px; border-top:1px solid var(--border-light); background:var(--chat-surface-light); border-radius:0 0 10px 10px}
+  .chat-message{margin-bottom:20px; padding:20px 24px; border-radius:12px; font-size:22px; line-height:1.5; font-family:'Roboto', sans-serif; font-weight:bold}
+  .chat-message.user{background:linear-gradient(135deg, var(--primary-light), var(--primary)); color:black; margin-left:20px; border-radius:12px 12px 4px 12px}
+  .chat-message.assistant{background:var(--chat-surface-light); border:1px solid var(--border-light); margin-right:20px; border-radius:12px 12px 12px 4px; color:black}
+  .chat-message.system{background:rgba(5,150,105,0.1); border:1px solid var(--primary); color:var(--primary); text-align:center; font-style:italic; margin:0}
+  .chat-input-row{display:flex; gap:8px; align-items:center}
+  .chat-input-row input{flex:1; border-radius:8px; border:1px solid var(--border-light); background:var(--chat-surface); color:black; padding:16px 20px; font-size:20px; font-family:'Roboto', sans-serif}
+  .chat-input-row button{background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:white; border:1px solid var(--primary-dark); border-radius:8px; padding:16px 24px; font-weight:600; cursor:pointer; font-size:20px}
+  .group{background:linear-gradient(135deg, var(--dark-surface-lighter), var(--dark-surface-light)); border:1px solid var(--border-dark); border-radius:8px; padding:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2), var(--shadow-inset)}
+  .group h3{
+    margin:0 0 16px; 
+    font-size:20px; 
+    color:var(--accent); 
+    letter-spacing:1px; 
+    text-transform:uppercase; 
+    font-weight:800; 
+    text-shadow:0 2px 6px rgba(0,0,0,0.5); 
+    text-align:center;
+    position:relative;
+    padding-bottom:4px;
+  }
+  .group h3::after{
+    content:'';
+    position:absolute;
+    bottom:0;
+    left:50%;
+    transform:translateX(-50%);
+    width:60px;
+    height:2px;
+    background:linear-gradient(90deg, transparent, var(--accent), transparent);
+    border-radius:1px;
+  }
+  .row{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  button, .file-label{appearance:none; border:1px solid var(--primary); border-radius:6px; padding:8px 12px; background:linear-gradient(135deg, var(--primary-light), var(--primary)); color:white; font-weight:500; font-size:12px; cursor:pointer; transition:all .2s ease; box-shadow:var(--shadow-button); text-shadow:0 1px 1px rgba(0,0,0,0.2)}
+  button:hover,.file-label:hover{background:linear-gradient(135deg, var(--accent), var(--primary-light)); transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)}
+  button:active,.file-label:active{transform:translateY(0); box-shadow:0 1px 2px rgba(0,0,0,0.2), inset 0 1px 3px rgba(0,0,0,0.2)}
+  button[data-active="true"]{background:linear-gradient(135deg, var(--success), var(--accent)); box-shadow:0 4px 12px rgba(34,197,94,0.4), var(--shadow-inset)}
+  button[disabled]{opacity:.5; cursor:not-allowed; transform:none; box-shadow:inset 0 1px 3px rgba(0,0,0,0.3)}
+  input[type="range"]{
+    width:180px; 
+    height:32px; 
+    -webkit-appearance:none; 
+    background:linear-gradient(145deg, var(--dark-surface-lighter), var(--dark-surface-light)); 
+    border:2px solid var(--primary); 
+    border-radius:16px; 
+    outline:none; 
+    box-shadow:inset 0 4px 8px rgba(0,0,0,0.4), 0 2px 8px rgba(5,150,105,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+    position:relative;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none; 
+    width:28px; 
+    height:28px; 
+    border-radius:50%; 
+    background:linear-gradient(145deg, var(--accent), var(--primary)); 
+    cursor:pointer; 
+    box-shadow:0 4px 12px rgba(52,211,153,0.5), inset 0 2px 4px rgba(255,255,255,0.3), 0 0 0 2px rgba(255,255,255,0.2); 
+    transition:all .3s ease;
+    border:2px solid white;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover{
+    background:linear-gradient(145deg, var(--success), var(--accent)); 
+    transform:scale(1.15);
+    box-shadow:0 6px 16px rgba(34,197,94,0.6), inset 0 2px 6px rgba(255,255,255,0.4), 0 0 0 3px rgba(255,255,255,0.3);
+  }
+  .chat{display:flex; gap:8px; align-items:center}
+  .chat input{flex:1; border-radius:8px; border:1px solid var(--border-light); background:var(--chat-surface); color:var(--text-chat); padding:10px 12px; font-size:13px; transition:all .2s ease; box-shadow:0 2px 4px rgba(0,0,0,0.1), inset 0 1px 2px rgba(0,0,0,0.05)}
+  .chat input:focus{outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(5,150,105,0.2), 0 2px 8px rgba(0,0,0,0.15)}
+  .log{height:100px; overflow:auto; background:var(--chat-surface-light); border:1px solid var(--border-light); border-radius:6px; padding:8px; font-size:11px; color:var(--text-chat); line-height:1.4; box-shadow:inset 0 2px 4px rgba(0,0,0,0.05)}
+  .file{display:none}
+  .file-label{display:inline-flex; align-items:center; gap:6px}
+  .badge{
+    font-size:13px; 
+    padding:8px 16px; 
+    border-radius:8px; 
+    background:linear-gradient(145deg, var(--primary), var(--primary-dark)); 
+    border:2px solid var(--accent); 
+    color:white; 
+    font-weight:700; 
+    box-shadow:0 3px 8px rgba(5,150,105,0.4), inset 0 2px 4px rgba(255,255,255,0.2); 
+    text-shadow:0 2px 4px rgba(0,0,0,0.4);
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    position:relative;
+    overflow:hidden;
+  }
+  .drop-hint{border:1px dashed var(--border-dark); border-radius:6px; padding:8px; font-size:11px; color:var(--text-dark-muted); text-align:center; background:rgba(255,255,255,0.05)}
+  footer{padding:8px 16px; text-align:center; color:var(--text-dark-muted); font-size:11px; background:linear-gradient(135deg, var(--dark-surface), var(--primary-darker)); border-top:2px solid var(--border-dark); box-shadow:0 -2px 8px rgba(0,0,0,0.2)}
+  
+  /* Column Layout Styles */
+  .left-column, .right-column{display:flex; flex-direction:column; justify-content:flex-start; gap:8px; min-width:300px; max-width:400px; flex:0 0 auto}
+  .center-column{opacity:0; pointer-events:none} /* Invisible spacer for chatbot area */
+  
+  /* Chat Main Group Styles - WHITE THEME */
+  .chat-main-group{height:100%; display:flex; flex-direction:column; background:var(--chat-surface); border-radius:8px; padding:12px; border:2px solid var(--border-light); box-shadow:0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.8)}
+  .chat-main-group h3{color:var(--primary); font-size:13px; margin-bottom:10px; font-weight:600}
+  .chat-main-group .log{flex:1; margin-bottom:10px; min-height:85px}
+  .chat-main-group .chat{margin-bottom:8px}
+  .chat-main-group .chat button{background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:white; font-weight:600; padding:10px 16px; font-size:12px; border-radius:6px; border:1px solid var(--primary-dark); box-shadow:0 3px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2); text-shadow:0 1px 1px rgba(0,0,0,0.2)}
+  .chat-main-group .chat button:hover{background:linear-gradient(135deg, var(--primary-light), var(--primary)); transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3)}
+  .chat-controls{justify-content:center; gap:6px; flex-wrap:wrap}
+  .chat-controls button{background:linear-gradient(135deg, var(--chat-surface-light), var(--chat-surface)) !important; color:var(--text-chat) !important; border:1px solid var(--border-light) !important; box-shadow:0 2px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.5) !important}
+  .chat-controls button:hover{background:linear-gradient(135deg, var(--primary), var(--primary-dark)) !important; color:white !important; transform:translateY(-1px) !important}
+  .chat-controls .badge{background:var(--chat-surface-light) !important; color:var(--text-chat-muted) !important; border:1px solid var(--border-light) !important; box-shadow:inset 0 1px 2px rgba(0,0,0,0.05) !important}
+  
+  /* Premium button styles with perfect centering */
+  .left-column .group, .right-column .group{
+    padding:36px; 
+    background:linear-gradient(145deg, var(--dark-surface-lighter), var(--dark-surface-light)); 
+    border:2px solid rgba(5,150,105,0.3);
+    border-radius:16px; 
+    box-shadow:0 20px 50px rgba(0,0,0,0.8), 0 10px 25px rgba(0,0,0,0.6), 0 5px 15px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1), 0 0 0 1px rgba(5,150,105,0.2);
+    backdrop-filter:blur(10px);
+    width:100%;
+    backdrop-filter:blur(10px);
+    margin-bottom:12px;
+  }
+  .left-column button, .right-column button{
+    padding:20px 24px; 
+    font-size:20px;
+    width:100%;
+    min-height:70px; 
+    font-weight:700;
+    min-width:120px;
+    height:70px;
+    border-radius:6px;
+    background:linear-gradient(145deg, var(--primary), var(--primary-dark));
+    border:2px solid var(--primary-light);
+    color:white;
+    box-shadow:0 4px 12px rgba(5,150,105,0.4), inset 0 2px 4px rgba(255,255,255,0.2), 0 0 0 1px rgba(5,150,105,0.6);
+    transition:all .3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-shadow:0 2px 4px rgba(0,0,0,0.4);
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    position:relative;
+    overflow:hidden;
+  }
+  .left-column button::before, .right-column button::before{
+    content:'';
+    position:absolute;
+    top:0;
+    left:-100%;
+    width:100%;
+    height:100%;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition:left 0.5s ease;
+  }
+  .left-column button:hover::before, .right-column button:hover::before{
+    left:100%;
+  }
+  .left-column button:hover, .right-column button:hover{
+    background:linear-gradient(145deg, var(--accent), var(--primary)); 
+    transform:translateY(-4px) scale(1.02); 
+    box-shadow:0 8px 20px rgba(5,150,105,0.5), inset 0 2px 6px rgba(255,255,255,0.3), 0 0 0 2px rgba(52,211,153,0.8);
+    border-color:var(--accent);
+  }
+  .left-column button:active, .right-column button:active{
+    transform:translateY(-2px) scale(1.01); 
+    box-shadow:0 4px 12px rgba(5,150,105,0.4), inset 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .left-column .row, .right-column .row{
+    gap:6px; 
+    margin-top:6px; 
+    justify-content:center; 
+    align-items:stretch;
+    display:flex;
+    flex-wrap:wrap;
+    width:100%;
+  }
+  
+  /* Force buttons to stack in rows of 2 */
+  .right-column .row {
+    max-width:240px;
+    margin:0 auto;
+    margin-top:6px;
+  }
+  
+  .right-column button {
+    flex:1;
+    max-width:110px;
+    min-width:80px;
+  }
+  .left-column .row:first-child, .right-column .row:first-child{margin-top:0}
+  
+  /* Special layout for single buttons */
+  .left-column .row:has(button:only-child), .right-column .row:has(button:only-child){
+    justify-content:center;
+  }
+  
+  /* Special button styles */
+  #zoomies{
+    background:linear-gradient(145deg, var(--success), var(--accent)) !important; 
+    color:white !important; 
+    border:2px solid var(--accent) !important;
+    font-weight:700; 
+    box-shadow:0 6px 16px rgba(34,197,94,0.5), inset 0 2px 4px rgba(255,255,255,0.3) !important;
+    animation:pulse-glow 2s infinite;
+  }
+  #zoomies:hover{
+    background:linear-gradient(145deg, var(--accent), var(--success)) !important; 
+    box-shadow:0 8px 20px rgba(52,211,153,0.6), inset 0 2px 6px rgba(255,255,255,0.4) !important;
+    transform:translateY(-4px) scale(1.05) !important;
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow:0 6px 16px rgba(34,197,94,0.5), inset 0 2px 4px rgba(255,255,255,0.3); }
+    50% { box-shadow:0 6px 16px rgba(34,197,94,0.8), inset 0 2px 4px rgba(255,255,255,0.3), 0 0 20px rgba(34,197,94,0.3); }
+  }
+  
+  /* Center alignment for speed control row */
+  .row:has(input[type=\"range\"]) {
+    justify-content:center !important;
+    align-items:center;
+    gap:12px;
+  }
+  
+  /* Enhanced control spacing */
+  .left-column .group, .right-column .group {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width:1800px){
+    .chat-overlay{width:1300px}
+  }
+  
+  @media (max-width:1600px){
+    .chat-overlay{width:1200px}
+  }
+  
+  @media (max-width:1400px){
+    .chat-overlay{width:1000px}
+    .panel{gap:18px}
+  }
+  
+  @media (max-width:1200px){
+    .chat-overlay{width:800px}
+    .panel{gap:16px; padding:30px 30px 0 30px}
+    .left-column, .right-column{min-width:240px; max-width:300px}
+    .left-column .group, .right-column .group{padding:16px}
+    .left-column button, .right-column button{padding:12px 16px; font-size:13px; min-height:44px}
+  }
+  
+  @media (max-width:900px){
+    .chat-overlay{width:600px; height:300px}
+    .chat-overlay-messages{height:200px}
+    .panel{flex-direction:column; align-items:center; gap:15px; padding:20px}
+    .left-column, .right-column{min-width:280px; max-width:400px; width:100%}
+  }
+  
+  @media (max-width:700px){
+    .chat-overlay{width:90vw; left:5vw; transform:none; height:320px}
+    .chat-overlay-messages{height:220px}
+    .left-column .group, .right-column .group{padding:18px}
+  }
+</style>
+</head>
+<body>
+<header>
+</header>
+
+<div class="wrap">
+  <div class="stage" id="stage" aria-label="3D scene">
+    <div id="overlay" style="position:absolute; left:12px; bottom:12px; font-size:11px; background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); border:2px solid #059669; color:#111827; padding:10px 14px; border-radius:8px; font-weight:500; box-shadow:0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.8);">Drop a .glb here or use "Load .glb".</div>
+  </div>
+  
+  <!-- Floating Chat Overlay -->
+  <div class="chat-overlay" id="chatOverlay">
+    <div class="chat-overlay-header">Talk to Jennifur</div>
+    <div class="chat-overlay-messages" id="chatMessages"></div>
+    <div class="chat-overlay-input">
+      <div class="chat-input-row">
+        <input id="chatInput" placeholder="Type your message to Jennifur..." />
+        <button id="sendChat">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <aside class="panel">
+    <!-- Left Column: Movement Controls -->
+    <div class="left-column">
+      <!-- Hidden file input for drag & drop functionality -->
+      <input id="file" class="file" type="file" accept=".glb,.gltf" style="display:none;" />
+
+      <div class="group">
+        <h3>Movement</h3>
+        <div class="row">
+          <button id="stopWalk">Stop</button>
+          <button id="comeHere">Come here</button>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <button id="wander">Wander</button>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <button id="zoomies">Zoomies</button>
+          <button id="jump">Jump</button>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <span>Speed</span><input id="speed" type="range" min="0.2" max="2.5" step="0.1" value="1.0">
+          <span id="spv" class="badge">1.0x</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Center Column: Spacer for chatbot -->
+    <div class="center-column">
+    </div>
+
+    <!-- Right Column: Actions -->
+    <div class="right-column">
+      <div class="group">
+        <h3>Actions</h3>
+        <div class="row">
+          <button id="meow">Meow</button>
+          <button id="purr">Purr</button>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <button id="tail">Tail Wag</button>
+          <button id="stretch">Stretch</button>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <button id="play">Play</button>
+          <button id="groom">Groom</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  Tip: Use WASD to move, left/right arrows to turn, up/down arrows for speed. Mouse drag to rotate camera, wheel to zoom. Space = start/stop walk.<br>
+  Actions: M = meow, T = stretch, P = purr, Y = play, G = groom
+</footer>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const overlay = document.getElementById('overlay');
+function log(msg){ 
+  console.log(msg); // Always log to console
+  const el = document.getElementById('chatMessages'); 
+  if(el) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'chat-message system';
+    messageDiv.textContent = msg;
+    el.appendChild(messageDiv);
+    el.scrollTop = el.scrollHeight;
+  }
+}
+
+function addChatMessage(message, isUser = false) {
+  const el = document.getElementById('chatMessages');
+  if(el) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${isUser ? 'user' : 'assistant'}`;
+    messageDiv.textContent = message;
+    el.appendChild(messageDiv);
+    el.scrollTop = el.scrollHeight;
+  }
+}
+
+// Texture loader
+const textureLoader = new THREE.TextureLoader();
+
+const stage = document.getElementById('stage');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf9fafb);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(stage.clientWidth, stage.clientHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+renderer.shadowMap.enabled = true;
+stage.appendChild(renderer.domElement);
+
+// Fence boundary system - define size early for camera positioning
+const fenceDepth = 5; // Depth of the play area (front to back) - extended back wall
+const fenceWidth = 6; // Width of the play area (left to right) - narrower to stay in camera view
+
+const camera = new THREE.PerspectiveCamera(45, stage.clientWidth/stage.clientHeight, 0.01, 5000);
+camera.position.set(0, 1.2, 8); // Fixed camera position at cat eye level
+camera.lookAt(0, 0.8, 0); // Look slightly lower to match cat height
+// const controls = new OrbitControls(camera, renderer.domElement);
+// controls.enableDamping = true;
+// controls.target.set(0, 1.0, 0); // Look at center of enclosure
+
+const hemi = new THREE.HemisphereLight(0xffffff, 0x404060, .9); scene.add(hemi);
+const key = new THREE.DirectionalLight(0xffffff, 2.0); key.position.set(3,5,2); key.castShadow = true; key.shadow.mapSize.set(2048,2048); scene.add(key);
+
+// ground with jennifur-floor.jpg texture
+const floorTexture = textureLoader.load('jennifur-floor.jpg?' + Date.now());
+floorTexture.wrapS = THREE.RepeatWrapping;
+floorTexture.wrapT = THREE.RepeatWrapping;
+floorTexture.repeat.set(100, 100); // Much smaller texture, repeated more throughout scene
+
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(400,400),
+  new THREE.MeshStandardMaterial({
+    map: floorTexture,
+    color: 0xD2B48C, // Light brown tint
+    roughness: 0.8, 
+    metalness: 0.0
+  })
+);
+ground.rotation.x = -Math.PI/2; ground.position.y = 0; ground.receiveShadow = true; scene.add(ground);
+
+// grid hint - hidden for carpet look
+// const grid = new THREE.GridHelper(400, 400, 0x334, 0x223); grid.position.y = 0.001; scene.add(grid);
+
+// Fence boundary system continued
+const fenceHeight = 1.5;
+const wallHeight = 12.0; // Very tall walls - 1.5x taller (8.0 * 1.5)
+const fenceThickness = 0.1;
+
+// Create fence posts and rails
+const fenceGroup = new THREE.Group();
+
+// Fence material - invisible
+const fenceMaterial = new THREE.MeshStandardMaterial({
+  color: 0x8B4513, // Brown wood color
+  roughness: 0.8,
+  metalness: 0.1,
+  transparent: true,
+  opacity: 0.0, // Completely invisible
+  visible: false // Make it completely invisible
+});
+
+// Wall materials with textures - commented out for plain white walls
+// const leftWallTexture = textureLoader.load('./jennifur-left.png');
+// const backWallTexture = textureLoader.load('./jennifur-middle.png');
+// const rightWallTexture = textureLoader.load('./jennifur-right.jpg');
+
+const leftWallMaterial = new THREE.MeshStandardMaterial({
+  // map: leftWallTexture,
+  color: 0xFFFFFF, // Plain white
+  roughness: 0.9,
+  metalness: 0.0
+});
+
+const backWallMaterial = new THREE.MeshStandardMaterial({
+  // map: backWallTexture,
+  color: 0xFFFFFF, // Plain white
+  roughness: 0.9,
+  metalness: 0.0
+});
+
+const rightWallMaterial = new THREE.MeshStandardMaterial({
+  // map: rightWallTexture,
+  color: 0xFFFFFF, // Plain white
+  roughness: 0.9,
+  metalness: 0.0
+});
+
+// Create fence rails around the perimeter
+const railGeometry = new THREE.BoxGeometry(fenceDepth * 2 + fenceThickness, 0.1, fenceThickness);
+const postGeometry = new THREE.CylinderGeometry(0.05, 0.05, fenceHeight, 8);
+
+// Function to create a fence section (invisible barrier)
+function createFenceSection(x, z, rotation = 0, isEastWest = false) {
+  const section = new THREE.Group();
+  const sectionSize = isEastWest ? fenceWidth : fenceDepth;
+  
+  // Create invisible barrier - no visible geometry added to scene
+  // Collision boundary is handled by checkBoundaries() function
+  // This creates an empty group that maintains positioning but is invisible
+  
+  section.position.set(x, 0, z);
+  section.rotation.y = rotation;
+  // No shadow casting for invisible fence
+  return section;
+}
+
+// Function to create a wall section
+function createWallSection(x, z, rotation = 0, isEastWest = false, material = backWallMaterial) {
+  const section = new THREE.Group();
+  
+  // Calculate wall dimensions to ensure corner connection
+  let wallWidth, wallThickness;
+  if (isEastWest) {
+    // Side walls: extend from front to back plus overlap
+    wallWidth = (fenceDepth * 2) + 0.4; // Full depth plus overlap
+    wallThickness = 0.2;
+  } else {
+    // Back wall: extend from side to side plus overlap  
+    wallWidth = (fenceWidth * 2) + 0.4; // Full width plus overlap
+    wallThickness = 0.2;
+  }
+  
+  const wall = new THREE.Mesh(
+    new THREE.BoxGeometry(wallWidth, wallHeight, wallThickness),
+    material
+  );
+  wall.position.y = wallHeight / 2;
+  section.add(wall);
+  
+  section.position.set(x, 0, z);
+  section.rotation.y = rotation;
+  wall.castShadow = false;
+  wall.receiveShadow = false;
+  return section;
+}
+
+// Add fence and wall sections - walls positioned to connect at corners
+fenceGroup.add(createFenceSection(0, fenceDepth, 0, false)); // North fence (front - camera side)
+fenceGroup.add(createWallSection(0, -fenceDepth, 0, false, backWallMaterial)); // South wall (back) - jennifur-middle.jpg
+fenceGroup.add(createWallSection(fenceWidth, 0, Math.PI/2, true, rightWallMaterial)); // East wall (right) - jennifur-right.jpg
+fenceGroup.add(createWallSection(-fenceWidth, 0, Math.PI/2, true, leftWallMaterial)); // West wall (left) - jennifur-left.jpg
+
+// Wall elements removed - clean walls
+
+// Fence elements don't cast or receive shadows
+fenceGroup.traverse(obj => {
+  if(obj.isMesh) {
+    obj.castShadow = false;
+    obj.receiveShadow = false;
+  }
+});
+
+scene.add(fenceGroup);
+
+// Room Furniture
+const furnitureGroup = new THREE.Group();
+
+// Carpet removed - clean floor surface
+
+// Luxury Cat Tower - multi-level climbing structure with enhanced details
+function createCatTower() {
+  const towerGroup = new THREE.Group();
+  
+  // Ornate base platform with carved edges and better materials
+  const baseGeometry = new THREE.CylinderGeometry(1.0, 1.0, 0.2, 16);
+  const baseMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x654321, // Dark wood
+    roughness: 0.8,
+    metalness: 0.0
+  });
+  const base = new THREE.Mesh(baseGeometry, baseMaterial);
+  base.position.set(0, 0.1, 0);
+  base.castShadow = true;
+  base.receiveShadow = true;
+  towerGroup.add(base);
+  
+  // Enhanced decorative base trim with metallic finish
+  const trimGeometry = new THREE.TorusGeometry(1.0, 0.05, 8, 16);
+  const trimMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xDAA520, // Gold trim
+    roughness: 0.2,
+    metalness: 0.8
+  });
+  const baseTrim = new THREE.Mesh(trimGeometry, trimMaterial);
+  baseTrim.position.set(0, 0.2, 0);
+  baseTrim.rotation.x = Math.PI/2;
+  baseTrim.castShadow = true;
+  towerGroup.add(baseTrim);
+  
+  // Central pole with realistic rope texture and multiple segments
+  for(let i = 0; i < 5; i++) {
+    const poleSegment = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.1, 0.1, 0.6, 12),
+      new THREE.MeshStandardMaterial({ 
+        color: 0xD2B48C, // Tan rope color
+        roughness: 0.9,
+        metalness: 0.0
+      })
+    );
+    poleSegment.position.set(0, 0.5 + i * 0.6, 0);
+    poleSegment.castShadow = true;
+    towerGroup.add(poleSegment);
+    
+    // Enhanced rope wrapping detail with spiral rings
+    for(let j = 0; j < 12; j++) {
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(0.12, 0.02, 4, 8),
+        new THREE.MeshStandardMaterial({ 
+          color: 0x8B4513,
+          roughness: 0.8,
+          metalness: 0.0
+        })
+      );
+      ring.position.set(0, 0.3 + i * 0.6 + j * 0.05, 0);
+      ring.rotation.x = Math.PI/2;
+      towerGroup.add(ring);
+    }
+  }
+  
+  // Mid-level platform with enhanced cushion and details
+  const midBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.7, 0.7, 0.12, 12),
+    new THREE.MeshStandardMaterial({ 
+      color: 0x654321,
+      roughness: 0.8,
+      metalness: 0.0
+    })
+  );
+  midBase.position.set(0, 1.8, 0);
+  midBase.castShadow = true;
+  midBase.receiveShadow = true;
+  towerGroup.add(midBase);
+  
+  // Enhanced mid-level cushion with fabric texture simulation
+  const midCushion = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.6, 0.6, 0.08, 16),
+    new THREE.MeshStandardMaterial({ 
+      color: 0x228B22, // Forest green cushion
+      roughness: 0.9,
+      metalness: 0.0
+    })
+  );
+  midCushion.position.set(0, 1.9, 0);
+  midCushion.castShadow = true;
+  towerGroup.add(midCushion);
+  
+  // Cushion stitching detail
+  for(let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    const stitch = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.005, 0.005, 0.08, 4),
+      new THREE.MeshStandardMaterial({ 
+        color: 0x8B0000,
+        roughness: 0.5,
+        metalness: 0.0
+      })
+    );
+    stitch.position.set(Math.cos(angle) * 0.3, 1.9, Math.sin(angle) * 0.3);
+    stitch.rotation.z = angle;
+    towerGroup.add(stitch);
+  }
+  
+  // Top penthouse platform with luxury details
+  const topBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.6, 0.6, 0.15, 16),
+    new THREE.MeshStandardMaterial({ 
+      color: 0x654321,
+      roughness: 0.8,
+      metalness: 0.0
+    })
+  );
+  topBase.position.set(0, 2.8, 0);
+  topBase.castShadow = true;
+  topBase.receiveShadow = true;
+  towerGroup.add(topBase);
+  
+  // Luxury top cushion with velvet texture simulation
+  const topCushion = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.5, 0.5, 0.1, 16),
+    new THREE.MeshStandardMaterial({ 
+      color: 0x90EE90, // Light green velvet
+      roughness: 0.7,
+      metalness: 0.0
+    })
+  );
+  topCushion.position.set(0, 2.9, 0);
+  topCushion.castShadow = true;
+  towerGroup.add(topCushion);
+  
+  // Enhanced hanging toys with realistic materials
+  for(let i = 0; i < 3; i++) {
+    const angle = (i / 3) * Math.PI * 2;
+    // Toy string with better material
+    const string = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.005, 0.005, 0.4, 4),
+      new THREE.MeshStandardMaterial({ 
+        color: 0x000000,
+        roughness: 0.9,
+        metalness: 0.0
+      })
+    );
+    string.position.set(Math.cos(angle) * 0.4, 2.6, Math.sin(angle) * 0.4);
+    towerGroup.add(string);
+    
+    // Enhanced toy ball with metallic finish
+    const toy = new THREE.Mesh(
+      new THREE.SphereGeometry(0.05, 8, 6),
+      new THREE.MeshStandardMaterial({ 
+        color: [0xFF1493, 0x00FF00, 0xFFFF00][i],
+        roughness: 0.2,
+        metalness: 0.8
+      })
+    );
+    toy.position.set(Math.cos(angle) * 0.4, 2.4, Math.sin(angle) * 0.4);
+    toy.castShadow = true;
+    towerGroup.add(toy);
+  }
+  
+  // Enhanced side scratching post with realistic texture
+  const scratchPost = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.08, 1.2, 8),
+    new THREE.MeshStandardMaterial({ 
+      color: 0xDEB887,
+      roughness: 0.9,
+      metalness: 0.0
+    })
+  );
+  scratchPost.position.set(0.8, 0.8, 0);
+  scratchPost.rotation.z = Math.PI/6; // Angled
+  scratchPost.castShadow = true;
+  towerGroup.add(scratchPost);
+  
+  // Add scratching post texture details
+  for(let i = 0; i < 8; i++) {
+    const scratch = new THREE.Mesh(
+      new THREE.BoxGeometry(0.02, 0.1, 0.01),
+      new THREE.MeshStandardMaterial({ 
+        color: 0xCD853F,
+        roughness: 0.8,
+        metalness: 0.0
+      })
+    );
+    scratch.position.set(0.8, 0.8 + i * 0.15, 0);
+    scratch.rotation.z = Math.PI/6;
+    scratch.rotation.y = (i / 8) * Math.PI * 2;
+    towerGroup.add(scratch);
+  }
+  
+  return towerGroup;
+}
+
+// Enhanced Side Table with Plant and realistic details
+function createTableWithPlant() {
+  const tableGroup = new THREE.Group();
+  
+  // Enhanced table legs with rich mahogany finish
+  const legGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.8, 8);
+  const legMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x5D4037, // Rich mahogany
+    roughness: 0.3,
+    metalness: 0.0
+  });
+  
+  const positions = [
+    [-0.25, 0.4, -0.25],
+    [0.25, 0.4, -0.25],
+    [-0.25, 0.4, 0.25],
+    [0.25, 0.4, 0.25]
+  ];
+  
+  positions.forEach(pos => {
+    const leg = new THREE.Mesh(legGeometry, legMaterial);
+    leg.position.set(pos[0], pos[1], pos[2]);
+    leg.castShadow = true;
+    tableGroup.add(leg);
+  });
+  
+  // Enhanced table top with polished wood finish
+  const topGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.05, 16);
+  const topMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x8D6E63, // Warm brown mahogany
+    roughness: 0.2,
+    metalness: 0.0
+  });
+  const tableTop = new THREE.Mesh(topGeometry, topMaterial);
+  tableTop.position.set(0, 0.825, 0);
+  tableTop.castShadow = true;
+  tableTop.receiveShadow = true;
+  tableGroup.add(tableTop);
+  
+  // Table top edge trim with decorative finish
+  const edgeTrim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.5, 0.02, 8, 16),
+    new THREE.MeshStandardMaterial({ 
+      color: 0x4E342E, // Dark brown trim
+      roughness: 0.3,
+      metalness: 0.0
+    })
+  );
+  edgeTrim.position.set(0, 0.85, 0);
+  edgeTrim.rotation.x = Math.PI/2;
+  tableGroup.add(edgeTrim);
+  
+  // Enhanced flower pot with realistic ceramic material and drainage holes
+  const potGeometry = new THREE.CylinderGeometry(0.15, 0.12, 0.2, 12);
+  const potMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x8B4513,
+    roughness: 0.3,
+    metalness: 0.0
+  });
+  const pot = new THREE.Mesh(potGeometry, potMaterial);
+  pot.position.set(0, 0.95, 0);
+  pot.castShadow = true;
+  tableGroup.add(pot);
+  
+  // Pot rim detail
+  const potRim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.15, 0.02, 8, 12),
+    new THREE.MeshStandardMaterial({ 
+      color: 0x654321,
+      roughness: 0.4,
+      metalness: 0.0
+    })
+  );
+  potRim.position.set(0, 1.05, 0);
+  potRim.rotation.x = Math.PI/2;
+  tableGroup.add(potRim);
+  
+  // Drainage holes in pot bottom
+  for(let i = 0; i < 3; i++) {
+    const angle = (i / 3) * Math.PI * 2;
+    const hole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.01, 0.01, 0.02, 8),
+      new THREE.MeshStandardMaterial({ 
+        color: 0x654321,
+        roughness: 0.3,
+        metalness: 0.0
+      })
+    );
+    hole.position.set(
+      Math.cos(angle) * 0.08, 
+      0.85, 
+      Math.sin(angle) * 0.08
+    );
+    tableGroup.add(hole);
+  }
+  
+  // Potting soil surface
+  const soil = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.14, 0.11, 0.02, 12),
+    new THREE.MeshStandardMaterial({ 
+      color: 0x8B4513,
+      roughness: 0.9,
+      metalness: 0.0
+    })
+  );
+  soil.position.set(0, 1.06, 0);
+  tableGroup.add(soil);
+  
+  // Enhanced plant stems with realistic green and varied heights
+  const stemMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x228B22,
+    roughness: 0.8,
+    metalness: 0.0
+  });
+  
+  for(let i = 0; i < 5; i++) {
+    const stemHeight = 0.25 + (Math.random() * 0.15); // Varied heights
+    const stemGeometry = new THREE.CylinderGeometry(0.015, 0.015, stemHeight, 8);
+    const stem = new THREE.Mesh(stemGeometry, stemMaterial);
+    
+    const angle = (i / 5) * Math.PI * 2;
+    const radius = 0.06 + (Math.random() * 0.04); // Varied positions
+    stem.position.set(
+      Math.cos(angle) * radius, 
+      1.07 + (stemHeight / 2), 
+      Math.sin(angle) * radius
+    );
+    stem.castShadow = true;
+    tableGroup.add(stem);
+    
+    // Add small branches to some stems
+    if(i % 2 === 0) {
+      const branchGeometry = new THREE.CylinderGeometry(0.008, 0.008, 0.08, 6);
+      const branch = new THREE.Mesh(branchGeometry, stemMaterial);
+      branch.position.set(
+        Math.cos(angle) * radius + (Math.random() - 0.5) * 0.02, 
+        1.07 + stemHeight - 0.04, 
+        Math.sin(angle) * radius + (Math.random() - 0.5) * 0.02
+      );
+      branch.rotation.z = (Math.random() - 0.5) * 0.5;
+      branch.castShadow = true;
+      tableGroup.add(branch);
+    }
+    
+    // Enhanced leaves with realistic shapes and positioning
+    const leafCount = 2 + Math.floor(Math.random() * 3); // 2-4 leaves per stem
+    
+    for(let j = 0; j < leafCount; j++) {
+      const leafHeight = 0.06 + (Math.random() * 0.04);
+      const leafWidth = 0.04 + (Math.random() * 0.03);
+      const leafGeometry = new THREE.SphereGeometry(
+        Math.max(leafHeight, leafWidth) * 0.5, 
+        8, 
+        6
+      );
+      
+      const leafMaterial = new THREE.MeshStandardMaterial({ 
+        color: [0x32CD32, 0x228B22, 0x90EE90][Math.floor(Math.random() * 3)], // Varied green shades
+        roughness: 0.7,
+        metalness: 0.0
+      });
+      
+      const leaf = new THREE.Mesh(leafGeometry, leafMaterial);
+      const leafAngle = (j / leafCount) * Math.PI * 2;
+      const leafRadius = 0.02 + (Math.random() * 0.02);
+      
+      leaf.position.set(
+        Math.cos(angle) * radius + Math.cos(leafAngle) * leafRadius, 
+        1.07 + stemHeight - (j * 0.08), 
+        Math.sin(angle) * radius + Math.sin(leafAngle) * leafRadius
+      );
+      
+      // Random leaf rotation for natural look
+      leaf.rotation.x = (Math.random() - 0.5) * 0.3;
+      leaf.rotation.z = (Math.random() - 0.5) * 0.3;
+      leaf.castShadow = true;
+      tableGroup.add(leaf);
+      
+      // Add leaf veins for extra realism
+      const veinGeometry = new THREE.CylinderGeometry(0.002, 0.002, leafHeight * 0.8, 4);
+      const veinMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x228B22,
+        roughness: 0.8,
+        metalness: 0.0
+      });
+      const vein = new THREE.Mesh(veinGeometry, veinMaterial);
+      vein.position.set(
+        leaf.position.x,
+        leaf.position.y,
+        leaf.position.z
+      );
+      vein.rotation.x = Math.PI/2;
+      tableGroup.add(vein);
+    }
+  }
+  
+  // Add small decorative stones around the base
+  for(let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    const stoneGeometry = new THREE.SphereGeometry(0.008 + Math.random() * 0.004, 6, 4);
+    const stoneMaterial = new THREE.MeshStandardMaterial({ 
+      color: [0x696969, 0x808080, 0xA9A9A9][Math.floor(Math.random() * 3)], // Varied gray shades
+      roughness: 0.9,
+      metalness: 0.0
+    });
+    
+    const stone = new THREE.Mesh(stoneGeometry, stoneMaterial);
+    const radius = 0.12 + (Math.random() * 0.03);
+    stone.position.set(
+      Math.cos(angle) * radius, 
+      1.07, 
+      Math.sin(angle) * radius
+    );
+    tableGroup.add(stone);
+  }
+  
+  return tableGroup;
+}
+
+// Enhanced Side Table with Lamp for ambient lighting
+function createTableWithLamp() {
+  const tableGroup = new THREE.Group();
+  
+  // Enhanced table legs with rich mahogany finish
+  const legGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.8, 8);
+  const legMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x5D4037, // Rich mahogany
+    roughness: 0.3,
+    metalness: 0.0
+  });
+  
+  const positions = [
+    [-0.25, 0.4, -0.25],
+    [0.25, 0.4, -0.25],
+    [-0.25, 0.4, 0.25],
+    [0.25, 0.4, 0.25]
+  ];
+  
+  positions.forEach(pos => {
+    const leg = new THREE.Mesh(legGeometry, legMaterial);
+    leg.position.set(pos[0], pos[1], pos[2]);
+    leg.castShadow = true;
+    tableGroup.add(leg);
+  });
+  
+  // Enhanced table top with polished wood finish
+  const topGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.05, 16);
+  const topMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x8D6E63, // Warm brown mahogany
+    roughness: 0.2,
+    metalness: 0.0
+  });
+  const tableTop = new THREE.Mesh(topGeometry, topMaterial);
+  tableTop.position.set(0, 0.825, 0);
+  tableTop.castShadow = true;
+  tableTop.receiveShadow = true;
+  tableGroup.add(tableTop);
+  
+  // Table top edge trim with decorative finish
+  const edgeTrim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.5, 0.02, 8, 16),
+    new THREE.MeshStandardMaterial({ 
+      color: 0x4E342E, // Dark brown trim
+      roughness: 0.3,
+      metalness: 0.0
+    })
+  );
+  edgeTrim.position.set(0, 0.85, 0);
+  edgeTrim.rotation.x = Math.PI/2;
+  tableGroup.add(edgeTrim);
+  
+  // Lamp base with metallic finish
+  const lampBaseGeometry = new THREE.CylinderGeometry(0.18, 0.22, 0.12, 16);
+  const lampBaseMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xB8860B, // Dark goldenrod brass
+    roughness: 0.3,
+    metalness: 0.8
+  });
+  const lampBase = new THREE.Mesh(lampBaseGeometry, lampBaseMaterial);
+  lampBase.position.set(0, 0.91, 0);
+  lampBase.castShadow = true;
+  tableGroup.add(lampBase);
+  
+  // Lamp stem
+  const lampStemGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.6, 12);
+  const lampStemMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xCD853F, // Peru brown
+    roughness: 0.4,
+    metalness: 0.3
+  });
+  const lampStem = new THREE.Mesh(lampStemGeometry, lampStemMaterial);
+  lampStem.position.set(0, 1.27, 0);
+  lampStem.castShadow = true;
+  tableGroup.add(lampStem);
+  
+  // Lamp shade
+  const lampShadeGeometry = new THREE.ConeGeometry(0.25, 0.22, 16);
+  const lampShadeMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xF5DEB3, // Wheat colored fabric shade
+    roughness: 0.8,
+    metalness: 0.0
+  });
+  const lampShade = new THREE.Mesh(lampShadeGeometry, lampShadeMaterial);
+  lampShade.position.set(0, 1.57, 0);
+  lampShade.castShadow = true;
+  tableGroup.add(lampShade);
+  
+  // Add warm light source
+  const light = new THREE.PointLight(0xFFE4B5, 1.2, 4); // Warm white light
+  light.position.set(0, 1.5, 0);
+  light.castShadow = true;
+  light.shadow.mapSize.width = 512;
+  light.shadow.mapSize.height = 512;
+  tableGroup.add(light);
+  
+  return tableGroup;
+}
+
+// Enhanced Cat Bed with cozy details
+function createCatBed() {
+  const bedGroup = new THREE.Group();
+  
+  // Bed base with wicker basket texture
+  const bedBaseGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.1, 16);
+  const bedBaseMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xD2B48C, // Natural wicker color
+    roughness: 0.9,
+    metalness: 0.0
+  });
+  const bedBase = new THREE.Mesh(bedBaseGeometry, bedBaseMaterial);
+  bedBase.position.set(0, 0.05, 0);
+  bedBase.castShadow = true;
+  bedBase.receiveShadow = true;
+  bedGroup.add(bedBase);
+  
+  // Bed cushion with soft fabric texture simulation
+  const cushionGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.08, 16);
+  const cushionMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x9ACD32, // Yellow green fabric
+    roughness: 0.8,
+    metalness: 0.0
+  });
+  const cushion = new THREE.Mesh(cushionGeometry, cushionMaterial);
+  cushion.position.set(0, 0.14, 0);
+  cushion.castShadow = true;
+  cushion.receiveShadow = true;
+  bedGroup.add(cushion);
+  
+  // Cushion stitching detail
+  for(let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2;
+    const stitch = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.003, 0.003, 0.08, 4),
+      new THREE.MeshStandardMaterial({ 
+        color: 0x556B2F, // Dark olive green stitching
+        roughness: 0.6,
+        metalness: 0.0
+      })
+    );
+    stitch.position.set(Math.cos(angle) * 0.25, 0.14, Math.sin(angle) * 0.25);
+    stitch.rotation.z = angle;
+    bedGroup.add(stitch);
+  }
+  
+  // Bed rim for extra comfort
+  const bedRim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.6, 0.03, 8, 16),
+    new THREE.MeshStandardMaterial({ 
+      color: 0x8FBC8F, // Dark sea green rim
+      roughness: 0.7,
+      metalness: 0.0
+    })
+  );
+  bedRim.position.set(0, 0.18, 0);
+  bedRim.rotation.x = Math.PI/2;
+  bedRim.castShadow = true;
+  bedGroup.add(bedRim);
+  
+  return bedGroup;
+}
+
+// Enhanced Food and Water Bowls with realistic materials
+function createBowl(color, isWater = false) {
+  const bowlGroup = new THREE.Group();
+  
+  const bowlGeometry = new THREE.CylinderGeometry(0.2, 0.15, 0.08, 12);
+  const bowlMaterial = new THREE.MeshStandardMaterial({ 
+    color: color,
+    roughness: isWater ? 0.05 : 0.2, // Smoother ceramic finish
+    metalness: isWater ? 0.8 : 0.1, // Less metallic for food bowl
+    transparent: isWater,
+    opacity: isWater ? 0.9 : 1.0
+  });
+  const bowl = new THREE.Mesh(bowlGeometry, bowlMaterial);
+  bowl.castShadow = true;
+  bowl.receiveShadow = true;
+  bowlGroup.add(bowl);
+  
+  // Bowl rim detail with glazed ceramic finish
+  const bowlRim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.2, 0.01, 8, 12),
+    new THREE.MeshStandardMaterial({ 
+      color: isWater ? 0x4682B4 : 0x228B22, // Steel blue for water, green for food
+      roughness: 0.1,
+      metalness: 0.0 // Ceramic, not metal
+    })
+  );
+  bowlRim.position.set(0, 0.12, 0);
+  bowlRim.rotation.x = Math.PI/2;
+  bowlGroup.add(bowlRim);
+  
+  // Add realistic water surface for water bowl
+  if(isWater) {
+    const waterSurface = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.18, 0.13, 0.01, 12),
+      new THREE.MeshStandardMaterial({ 
+        color: 0x0077BE, // Clear blue water
+        roughness: 0.02,
+        metalness: 0.0,
+        transparent: true,
+        opacity: 0.7
+      })
+    );
+    waterSurface.position.set(0, 0.09, 0);
+    bowlGroup.add(waterSurface);
+  }
+  
+  return bowlGroup;
+}
+
+// Enhanced Toy Box with realistic wood texture
+function createToyBox() {
+  const boxGroup = new THREE.Group();
+  
+  const toyBoxGeometry = new THREE.BoxGeometry(0.6, 0.3, 0.4);
+  const toyBoxMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x8B7355, // Natural wood grain color
+    roughness: 0.8,
+    metalness: 0.0
+  });
+  const toyBox = new THREE.Mesh(toyBoxGeometry, toyBoxMaterial);
+  toyBox.position.set(0, 0.15, 0);
+  toyBox.castShadow = true;
+  toyBox.receiveShadow = true;
+  boxGroup.add(toyBox);
+  
+  // Box lid with handle
+  const lidGeometry = new THREE.BoxGeometry(0.62, 0.05, 0.42);
+  const lidMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x9C8A6F, // Slightly darker wood for lid
+    roughness: 0.7,
+    metalness: 0.0
+  });
+  const lid = new THREE.Mesh(lidGeometry, lidMaterial);
+  lid.position.set(0, 0.425, 0);
+  lid.castShadow = true;
+  boxGroup.add(lid);
+  
+  // Lid handle with brass finish
+  const handleGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.1, 8);
+  const handleMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xB8860B, // Dark goldenrod brass
+    roughness: 0.2,
+    metalness: 0.7
+  });
+  const handle = new THREE.Mesh(handleGeometry, handleMaterial);
+  handle.position.set(0, 0.48, 0);
+  handle.rotation.x = Math.PI/2;
+  boxGroup.add(handle);
+  
+  // Box hinges
+  for(let i = 0; i < 2; i++) {
+    const hinge = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.01, 0.01, 0.4, 6),
+      new THREE.MeshStandardMaterial({ 
+        color: 0x696969,
+        roughness: 0.3,
+        metalness: 0.8
+      })
+    );
+    hinge.position.set(i === 0 ? -0.25 : 0.25, 0.15, 0.21);
+    hinge.rotation.x = Math.PI/2;
+    boxGroup.add(hinge);
+  }
+  
+  return boxGroup;
+}
+
+// Enhanced Lazy Boy Recliner
+function createLazyBoyRecliner() {
+  const chairGroup = new THREE.Group();
+  
+  // Chair base/seat
+  const seatGeometry = new THREE.BoxGeometry(1.2, 0.15, 1.0);
+  const seatMaterial = new THREE.MeshStandardMaterial({
+    color: 0x8B4513, // Saddle brown leather
+    roughness: 0.3,
+    metalness: 0.1
+  });
+  const seat = new THREE.Mesh(seatGeometry, seatMaterial);
+  seat.position.set(0, 0.4, 0);
+  seat.castShadow = true;
+  seat.receiveShadow = true;
+  chairGroup.add(seat);
+  
+  // Chair back
+  const backGeometry = new THREE.BoxGeometry(1.2, 1.3, 0.15);
+  const backMaterial = new THREE.MeshStandardMaterial({
+    color: 0x8B4513, // Matching leather
+    roughness: 0.3,
+    metalness: 0.1
+  });
+  const back = new THREE.Mesh(backGeometry, backMaterial);
+  back.position.set(0, 1.0, -0.4);
+  back.castShadow = true;
+  back.receiveShadow = true;
+  chairGroup.add(back);
+  
+  // Left armrest
+  const leftArmGeometry = new THREE.BoxGeometry(0.15, 0.6, 0.8);
+  const leftArm = new THREE.Mesh(leftArmGeometry, seatMaterial);
+  leftArm.position.set(-0.6, 0.7, -0.1);
+  leftArm.castShadow = true;
+  leftArm.receiveShadow = true;
+  chairGroup.add(leftArm);
+  
+  // Right armrest
+  const rightArmGeometry = new THREE.BoxGeometry(0.15, 0.6, 0.8);
+  const rightArm = new THREE.Mesh(rightArmGeometry, seatMaterial);
+  rightArm.position.set(0.6, 0.7, -0.1);
+  rightArm.castShadow = true;
+  rightArm.receiveShadow = true;
+  chairGroup.add(rightArm);
+  
+  // Headrest
+  const headrestGeometry = new THREE.CylinderGeometry(0.3, 0.3, 1.0, 16);
+  const headrest = new THREE.Mesh(headrestGeometry, backMaterial);
+  headrest.position.set(0, 1.5, -0.45);
+  headrest.rotation.z = Math.PI/2;
+  headrest.castShadow = true;
+  headrest.receiveShadow = true;
+  chairGroup.add(headrest);
+  
+  // Chair legs (4 legs)
+  const legGeometry = new THREE.CylinderGeometry(0.04, 0.04, 0.35, 8);
+  const legMaterial = new THREE.MeshStandardMaterial({
+    color: 0x654321, // Dark wood legs
+    roughness: 0.7,
+    metalness: 0.0
+  });
+  
+  const legPositions = [
+    [-0.5, 0.175, -0.4],
+    [0.5, 0.175, -0.4],
+    [-0.5, 0.175, 0.4],
+    [0.5, 0.175, 0.4]
+  ];
+  
+  legPositions.forEach(pos => {
+    const leg = new THREE.Mesh(legGeometry, legMaterial);
+    leg.position.set(pos[0], pos[1], pos[2]);
+    leg.castShadow = true;
+    chairGroup.add(leg);
+  });
+  
+  // Footrest (extended for recliner style)
+  const footrestGeometry = new THREE.BoxGeometry(1.0, 0.08, 0.6);
+  const footrest = new THREE.Mesh(footrestGeometry, seatMaterial);
+  footrest.position.set(0, 0.25, 0.8);
+  footrest.castShadow = true;
+  footrest.receiveShadow = true;
+  chairGroup.add(footrest);
+  
+  // Cushion tufting details
+  for(let i = 0; i < 3; i++) {
+    for(let j = 0; j < 2; j++) {
+      const tuft = new THREE.Mesh(
+        new THREE.SphereGeometry(0.02, 8, 6),
+        new THREE.MeshStandardMaterial({
+          color: 0x654321,
+          roughness: 0.4,
+          metalness: 0.0
+        })
+      );
+      tuft.position.set(
+        -0.3 + i * 0.3,
+        0.42,
+        -0.2 + j * 0.4
+      );
+      chairGroup.add(tuft);
+    }
+  }
+  
+  return chairGroup;
+}
+
+// Add enhanced furniture to the scene
+const catTower = createCatTower();
+catTower.position.set(-4, 0, -3);
+furnitureGroup.add(catTower);
+
+const table1 = createTableWithLamp();
+table1.position.set(4.5, 0, -2);
+furnitureGroup.add(table1);
+
+const table2 = createTableWithPlant();
+table2.position.set(-3, 0, 2);
+furnitureGroup.add(table2);
+
+const catBed = createCatBed();
+catBed.position.set(2, 0, 3);
+furnitureGroup.add(catBed);
+
+const foodBowl = createBowl(0xFF6347, false); // Food bowl
+foodBowl.position.set(-4.5, 0.04, 2); // Moved further left and forward
+furnitureGroup.add(foodBowl);
+
+const waterBowl = createBowl(0x4169E1, true); // Water bowl
+waterBowl.position.set(-4.0, 0.04, 2); // Moved further left and forward
+furnitureGroup.add(waterBowl);
+
+const toyBox = createToyBox();
+toyBox.position.set(4, 0, 1);
+furnitureGroup.add(toyBox);
+
+const lazyBoyRecliner = createLazyBoyRecliner();
+lazyBoyRecliner.position.set(4, 0, -4); // Back right corner
+lazyBoyRecliner.rotation.y = Math.PI * 1.75; // Angled toward the center for better view
+furnitureGroup.add(lazyBoyRecliner);
+
+// Add some additional decorative elements for realism
+// Small rug under the cat tower
+const smallRug = new THREE.Mesh(
+  new THREE.PlaneGeometry(2.5, 2.5),
+  new THREE.MeshStandardMaterial({ 
+    color: 0x8B4513,
+    roughness: 0.9,
+    metalness: 0.0
+  })
+);
+smallRug.rotation.x = -Math.PI/2;
+smallRug.position.set(-4, 0.005, -3);
+smallRug.receiveShadow = true;
+furnitureGroup.add(smallRug);
+
+// Decorative pillows around the cat bed
+for(let i = 0; i < 3; i++) {
+  const angle = (i / 3) * Math.PI * 2;
+  const pillow = new THREE.Mesh(
+    new THREE.SphereGeometry(0.15, 8, 6),
+    new THREE.MeshStandardMaterial({ 
+      color: [0xFFB6C1, 0xDDA0DD, 0x98FB98][i],
+      roughness: 0.8,
+      metalness: 0.0
+    })
+  );
+  pillow.position.set(
+    2 + Math.cos(angle) * 0.8, 
+    0.2, 
+    3 + Math.sin(angle) * 0.8
+  );
+  pillow.castShadow = true;
+  furnitureGroup.add(pillow);
+}
+
+scene.add(furnitureGroup);
+
+// Boundary collision detection
+function checkBoundaries() {
+  if(!model) return;
+  
+  const pos = model.position;
+  const boundaryX = fenceWidth - 0.5; // Keep cat a bit away from fence (width)
+  // Allow cat to get closer to front fence when in sit mode, but still safe
+  const boundaryZ = sitMode ? fenceDepth - 1.2 : fenceDepth - 0.5; // Keep cat safe distance from fence when sitting
+  
+  let hitBoundary = false;
+  
+  if(pos.x > boundaryX) {
+    pos.x = boundaryX;
+    hitBoundary = true;
+  } else if(pos.x < -boundaryX) {
+    pos.x = -boundaryX;
+    hitBoundary = true;
+  }
+  
+  if(pos.z > boundaryZ) {
+    pos.z = boundaryZ;
+    hitBoundary = true;
+  } else if(pos.z < -boundaryZ) {
+    pos.z = -boundaryZ;
+    hitBoundary = true;
+  }
+  
+  // If cat hits boundary, turn it around slightly
+  if(hitBoundary) {
+    const centerX = 0 - pos.x;
+    const centerZ = 0 - pos.z;
+    const angleToCenter = Math.atan2(centerX, centerZ);
+    smoothTurnTo(angleToCenter + (Math.random() - 0.5) * 0.5);
+  }
+}
+
+
+// state
+let model, mixer, walkAction, clock = new THREE.Clock();
+let walking = false, wanderMode = false, tailPhase = 0, talkMode = false;
+let speed = 1.0, target = null;
+let talkBob = true, idleBob = true; // requested more dramatic; enabled by default
+let isAirborne = false, vy = 0, baseY = 0;
+
+// Zoomies state
+let zoomiesMode = false, zoomiesTimer = 0, zoomiesSpeed = 5.0, zoomiesTarget = null;
+
+// Ball system
+let ball = null, ballMode = false, ballTimer = 0, ballPosition = new THREE.Vector3();
+let ballBouncing = false, ballVy = 0;
+let ballChaseDelay = 0; // Delay before cat starts chasing
+
+// Random behavior system
+let randomBehaviorTimer = 0;
+let nextRandomBehavior = Math.random() * 3 + 2; // 2-5 seconds for first behavior (much more frequent)
+let lastRandomBehavior = -1; // Track last behavior to avoid repetition
+let headTiltInProgress = false; // Prevent overlapping head tilts
+
+// Speed multiplier to make cat faster overall
+const speedMultiplier = 2.5;
+
+// Smooth turning system
+let targetRotationY = 0;
+let currentRotationY = 0;
+const turnSpeed = 6.0 * speedMultiplier; // Radians per second for smooth turning
+
+// Talk state management
+let preTalkState = {
+  rotation: 0,
+  wasWalking: false,
+  wasWandering: false,
+  wanderState: null
+};
+
+function saveCatState() {
+  if (!model) return;
+  preTalkState.rotation = currentRotationY;
+  preTalkState.wasWalking = walking;
+  preTalkState.wasWandering = wanderMode;
+  preTalkState.wanderState = wanderState;
+}
+
+function turnCatToCamera() {
+  if (!model) return;
+  // Calculate angle to face camera
+  const cameraAngle = Math.atan2(camera.position.x - model.position.x, camera.position.z - model.position.z);
+  smoothTurnTo(cameraAngle);
+}
+
+function restoreCatState() {
+  if (!model) return;
+  // Restore rotation
+  smoothTurnTo(preTalkState.rotation);
+  
+  // Restore movement state
+  if (preTalkState.wasWandering) {
+    wanderMode = true;
+    if(wanderBtn) wanderBtn.dataset.active = true;
+    wanderState = preTalkState.wanderState;
+  }
+  if (preTalkState.wasWalking && !preTalkState.wasWandering) {
+    walking = true;
+    if (walkAction) walkAction.play();
+    applyWalkingScale();
+  }
+}
+
+function smoothTurnTo(angle) {
+  if (!model) return;
+  targetRotationY = angle;
+}
+
+function smoothTurnBy(deltaAngle) {
+  if (!model) return;
+  targetRotationY += deltaAngle;
+  // Normalize angle to -PI to PI range
+  while (targetRotationY > Math.PI) targetRotationY -= Math.PI * 2;
+  while (targetRotationY < -Math.PI) targetRotationY += Math.PI * 2;
+}
+
+// Realistic wander state
+let wanderState = 'idle'; // 'walking', 'idle', 'turning'
+let wanderTimer = 0;
+let wanderDirection = 0;
+
+// Scale compensation for walking animation
+let originalScale = new THREE.Vector3(1, 1, 1);
+const walkingScaleMultiplier = 1.3; // Adjust this value to compensate for shrinking
+
+function findBone(root, names){
+  let found = null;
+  root.traverse(o=>{ if(found) return;
+    if(o.isBone || /bone/i.test(o.type)){
+      const n=(o.name||'').toLowerCase();
+      if(names.some(k=>n && n.includes(k))) found = o;
+    }
+  });
+  return found;
+}
+let boneHead=null, boneTail=null, bonePawR=null, bonePawL=null, boneLidL=null, boneLidR=null, boneEarL=null, boneEarR=null;
+
+
+function fixMaterials(root){
+  root.traverse(o=>{
+    if(o.isMesh && o.material){
+      const apply = (m)=>{
+        if(m.transparent && m.opacity < 0.05){ m.opacity = 1; m.transparent = false; }
+        if(typeof m.alphaTest === 'number' && m.alphaTest > 0.5) m.alphaTest = 0.5;
+        m.depthWrite = true;
+        m.side = THREE.FrontSide;
+      };
+      Array.isArray(o.material) ? o.material.forEach(apply) : apply(o.material);
+    }
+  });
+}
+
+async function loadGLB(url){
+  overlay.textContent = 'Loading model…';
+  const loader = new GLTFLoader();
+  return new Promise((resolve,reject)=>{ loader.load(url, gltf => resolve(gltf), undefined, reject); });
+}
+
+function useGLB(gltf){
+  if(model){ scene.remove(model); mixer && mixer.stopAllAction(); mixer = null; walkAction = null; }
+  model = gltf.scene;
+  model.traverse(o=>{ if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
+  fixMaterials(model);
+  scene.add(model);
+
+  if(gltf.animations && gltf.animations.length){
+    mixer = new THREE.AnimationMixer(model);
+    let clip = gltf.animations.find(a => /walk|move|unreal|base|idle/i.test(a.name)) || gltf.animations[0];
+    walkAction = mixer.clipAction(clip);
+    walkAction.enabled = true; walkAction.setLoop(THREE.LoopRepeat, Infinity);
+    walkAction.clampWhenFinished = false; walkAction.timeScale = speed;
+  }
+  boneHead = findBone(model, ['head','skull']);
+  boneTail = findBone(model, ['tail']);
+  bonePawR = findBone(model, ['r_fore','r_paw','right_hand','forearm.r','arm.r','hand.r','paw.r','front.r']);
+  bonePawL = findBone(model, ['l_fore','l_paw','left_hand','forearm.l','arm.l','hand.l','paw.l','front.l']);
+  boneLidL = findBone(model, ['lid_l','eye_lid_l','eyelid_l']);
+  boneLidR = findBone(model, ['lid_r','eye_lid_r','eyelid_r']);
+  boneEarL = findBone(model, ['ear_l','l_ear','ear.l']);
+  boneEarR = findBone(model, ['ear_r','r_ear','ear.r']);
+  // Position and scale model properly (without camera framing)
+  const box = new THREE.Box3().setFromObject(model);
+  const size = new THREE.Vector3(); 
+  box.getSize(size);
+  const center = new THREE.Vector3(); 
+  box.getCenter(center);
+  
+  // Center model on XZ plane and place on ground
+  model.position.sub(new THREE.Vector3(center.x, box.min.y, center.z));
+  
+  // Auto-scale if model is extremely small or large
+  const diag = size.length();
+  if(diag < 0.01){ 
+    const s = 1/Math.max(1e-6,diag); 
+    model.scale.multiplyScalar(s); 
+  }
+  if(diag > 400){ 
+    const s = 400/diag; 
+    model.scale.multiplyScalar(s); 
+  }
+  
+  baseY = model.position.y;
+
+  // Store the original scale for walking compensation
+  originalScale.copy(model.scale);
+  
+  // Initialize smooth turning system
+  currentRotationY = model.rotation.y;
+  targetRotationY = model.rotation.y;
+  
+  // Automatically start wander mode
+  wanderMode = true;
+  if(wanderBtn) wanderBtn.dataset.active = true;
+  wanderState = 'walking';
+  wanderTimer = Math.random() * 3 + 2; // Walk for 2-5 seconds initially
+  if(walkAction){ 
+    walkAction.play(); 
+    walking = true; 
+    applyWalkingScale(); 
+  }
+  
+  overlay.textContent = 'Ready!';
+  addChatMessage('Jennifur has arrived! Say hello to start chatting.', false);
+}
+
+// Auto-load default model (no button needed)
+
+// File input
+const fileInput = document.getElementById('file');
+fileInput.addEventListener('change', async (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  const url = URL.createObjectURL(f);
+  try{ const gltf = await loadGLB(url); useGLB(gltf); }
+  catch(e){ overlay.textContent = 'Failed to load file.'; log('File load error: ' + (e?.message||e)); }
+});
+
+// Drag & drop
+['dragenter','dragover'].forEach(ev=> document.addEventListener(ev, e=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; }));
+document.addEventListener('drop', async e=>{
+  e.preventDefault();
+  const f = e.dataTransfer.files?.[0]; if(!f) return;
+  if(!/\.gl(b|tf)$/i.test(f.name)) return overlay.textContent='Not a .glb/.gltf file.';
+  const url = URL.createObjectURL(f);
+  try{ const gltf = await loadGLB(url); useGLB(gltf); }
+  catch(err){ overlay.textContent='Failed to load dropped file.'; log('Drop load error: ' + (err?.message||err)); }
+});
+
+
+// movement controls
+const stopWalkBtn = document.getElementById('stopWalk');
+const comeHereBtn = document.getElementById('comeHere');
+const wanderBtn = document.getElementById('wander');
+const zoomiesBtn = document.getElementById('zoomies');
+const jumpBtn = document.getElementById('jump');
+// Scale compensation functions
+function applyWalkingScale() {
+  if(model) {
+    model.scale.copy(originalScale).multiplyScalar(walkingScaleMultiplier);
+  }
+}
+
+function applyRestingScale() {
+  if(model) {
+    model.scale.copy(originalScale);
+  }
+}
+
+// Movement control functions
+function disableAllMovementModes() {
+  wanderMode = false;
+  if(wanderBtn) wanderBtn.dataset.active = false;
+  target = null;
+  // Reset wander state
+  wanderState = 'idle';
+  wanderTimer = 0;
+  // Reset zoomies state
+  if(zoomiesMode) {
+    zoomiesMode = false;
+    zoomiesTimer = 0;
+    zoomiesTarget = null;
+    zoomiesBtn.dataset.active = false;
+    zoomiesBtn.textContent = 'Zoomies';
+  }
+  // Reset sit mode and restore normal cat position/scale
+  if(sitMode) {
+    sitMode = false;
+    if(model) {
+      model.position.y = baseY; // Return to normal height
+      model.scale.setScalar(1.0); // Return to normal scale
+    }
+  }
+}
+
+stopWalkBtn.onclick = ()=>{ 
+  walking = false; 
+  walkAction?.stop(); 
+  disableAllMovementModes(); // Clear all movement modes
+  applyRestingScale(); // Return to original scale
+};
+
+let sitMode = false; // Track if cat is sitting close to camera
+let comeHereTarget = false; // Track if cat should face camera when reaching target
+
+comeHereBtn.onclick = ()=>{ 
+  if(!model) return; 
+  disableAllMovementModes(); // Stop other movement modes first
+  
+  // Position cat in safe middle area
+  target = new THREE.Vector3(0, 0, 2); // Safe middle position
+  comeHereTarget = true; // Set flag to face camera when target is reached
+  
+  if(walkAction){ 
+    walkAction.play(); 
+    walking = true; 
+    applyWalkingScale(); // Compensate for animation shrinking
+  } 
+};
+
+wanderBtn.onclick = ()=>{ 
+  disableAllMovementModes(); // Stop other movement modes first
+  wanderMode = !wanderMode; 
+  if(wanderBtn) wanderBtn.dataset.active = wanderMode; 
+  if(wanderMode && walkAction){ 
+    // Start realistic wander behavior
+    wanderState = 'walking';
+    wanderTimer = Math.random() * 3 + 2; // Walk for 2-5 seconds
+    walkAction.play(); 
+    walking = true; 
+    applyWalkingScale(); // Compensate for animation shrinking
+  } else {
+    walkAction?.stop(); 
+    walking = false; 
+    applyRestingScale(); // Return to original scale when wander stops
+  }
+};
+
+zoomiesBtn.onclick = ()=>{
+  if(!model || !walkAction) return;
+  
+  // Start zoomies mode
+  disableAllMovementModes(); // Stop other movement modes first
+  zoomiesMode = true;
+  zoomiesTimer = 5.0; // 5 seconds of zoomies
+  zoomiesBtn.dataset.active = true;
+  zoomiesBtn.textContent = 'Zoomies (' + Math.ceil(zoomiesTimer) + 's)';
+  
+  // Start walking at high speed
+  walkAction.play();
+  walking = true;
+  applyWalkingScale();
+  
+  // Pick first random target
+  pickRandomZoomiesTarget();
+  
+  // Update button text with countdown
+  const countdownInterval = setInterval(()=>{
+    if(!zoomiesMode) {
+      clearInterval(countdownInterval);
+      return;
+    }
+    zoomiesBtn.textContent = 'Zoomies (' + Math.ceil(zoomiesTimer) + 's)';
+  }, 100);
+};
+jumpBtn.onclick = ()=>{ if(!model || isAirborne) return; isAirborne = true; vy = 3.8 * (0.6 + 0.4*speed); };
+
+
+function pickRandomTarget(){ 
+  if(!model) return; 
+  const boundaryX = fenceWidth - 2; // Keep targets well within fence
+  const boundaryZ = fenceDepth - 2;
+  const rX = ()=> (Math.random() * boundaryX * 2 - boundaryX);
+  const rZ = ()=> (Math.random() * boundaryZ * 2 - boundaryZ); 
+  target = new THREE.Vector3(rX(), 0, rZ()); 
+}
+
+function pickRandomZoomiesTarget(){ 
+  if(!model) return; 
+  const boundaryX = fenceWidth - 1; // Use more of the space for zoomies
+  const boundaryZ = fenceDepth - 1;
+  const rX = ()=> (Math.random() * boundaryX * 2 - boundaryX);
+  const rZ = ()=> (Math.random() * boundaryZ * 2 - boundaryZ); 
+  zoomiesTarget = new THREE.Vector3(rX(), 0, rZ()); 
+}
+
+// Random behavior functions
+function triggerRandomMeow() {
+  console.log('🔊 Meow sound playing');
+  if(meowAudio) {
+    meowAudio.currentTime = 0;
+    meowAudio.play().catch(e => console.log('Random meow failed:', e));
+  }
+}
+
+function triggerRandomHeadTilt() {
+  if(boneHead && !headTiltInProgress) {
+    headTiltInProgress = true;
+    console.log('🐱 Head tilt animation starting');
+    
+    // Store original rotation to ensure proper reset
+    const originalZ = boneHead.rotation.z;
+    
+    // More pronounced curious cat head tilt sequence
+    boneHead.rotation.z = originalZ + 0.7; // Tilt left more dramatically
+    setTimeout(() => {
+      if(boneHead) { // Safety check
+        boneHead.rotation.z = originalZ - 0.7; // Tilt right
+        setTimeout(() => {
+          if(boneHead) { // Safety check
+            boneHead.rotation.z = originalZ; // Return to exact original position
+            
+            // Add ear twitches for extra cuteness
+            if(boneEarL) { 
+              boneEarL.rotation.z += 0.4; 
+              setTimeout(() => { if(boneEarL) boneEarL.rotation.z -= 0.4; }, 200); 
+            }
+            if(boneEarR) { 
+              boneEarR.rotation.z -= 0.4; 
+              setTimeout(() => { if(boneEarR) boneEarR.rotation.z += 0.4; }, 200); 
+            }
+            
+            headTiltInProgress = false;
+            console.log('🐱 Head tilt animation complete');
+          }
+        }, 500);
+      }
+    }, 500);
+  } else if(headTiltInProgress) {
+    console.log('🐱 Head tilt skipped - already in progress');
+  }
+}
+
+function triggerRandomTailWag() {
+  if(boneTail) {
+    console.log('🐾 Tail wag animation starting');
+    // More noticeable tail wag
+    let intensity = 1.0;
+    let wags = 0;
+    const wagInterval = setInterval(() => {
+      boneTail.rotation.y = Math.sin(wags * 0.8) * (0.6 * intensity); // More pronounced
+      boneTail.rotation.z = Math.sin(wags * 0.6) * (0.3 * intensity); // More pronounced
+      intensity = Math.min(1.8, intensity + 0.1); // Higher max intensity
+      wags++;
+      
+      if(wags > 40) {
+        const settleInterval = setInterval(() => {
+          const settle = wags - 40;
+          const factor = Math.max(0, 1 - settle * 0.3);
+          boneTail.rotation.y *= factor;
+          boneTail.rotation.z *= factor;
+          if(settle > 10) {
+            clearInterval(wagInterval);
+            clearInterval(settleInterval);
+            boneTail.rotation.y = 0;
+            boneTail.rotation.z = 0;
+          }
+        }, 80);
+      }
+    }, 80);
+  }
+}
+
+function triggerRandomPurr() {
+  if(!model) return;
+  
+  // Stop all movement and put cat in resting position for purring
+  walking = false;
+  if(walkAction) walkAction.stop();
+  applyRestingScale();
+  target = null; // Clear any movement targets
+  
+  console.log('😸 Purr sound and animation starting');
+  // Play purr sound
+  if(purrAudio) {
+    purrAudio.currentTime = 0;
+    purrAudio.play().catch(e => console.log('Random purr failed:', e));
+  }
+  
+  // Subtle body movement while purring
+  let t = 0;
+  const originalX = model.position.x;
+  const originalZ = model.position.z;
+  const startTime = performance.now();
+  
+  const purrInterval = setInterval(() => {
+    const elapsed = (performance.now() - startTime) / 1000;
+    
+    // Stop animation when audio duration is reached (max 1.5 seconds for random purr)
+    if(elapsed >= 1.5 || purrAudio.ended || purrAudio.paused) { 
+      clearInterval(purrInterval); 
+      model.position.x = originalX; 
+      model.position.z = originalZ; 
+      return;
+    }
+    
+    // Subtle movement - smaller than button version
+    model.position.x = originalX + Math.sin(t * 8) * 0.01;
+    model.position.z = originalZ + Math.cos(t * 8) * 0.01;
+    t += 0.1;
+  }, 50);
+}
+
+function triggerRandomBehavior() {
+  // Skip random behaviors only during active interactions (ball play, zoomies, or talking)
+  if(ballMode || zoomiesMode || talkMode) {
+    console.log('Random behavior skipped:', { wanderMode, ballMode, zoomiesMode, talkMode });
+    return;
+  }
+  
+  const behaviors = [
+    triggerRandomMeow,
+    triggerRandomHeadTilt, 
+    triggerRandomTailWag,
+    triggerRandomPurr
+  ];
+  
+  // Pick a different behavior than the last one to ensure variety
+  let behaviorIndex;
+  do {
+    behaviorIndex = Math.floor(Math.random() * behaviors.length);
+  } while (behaviorIndex === lastRandomBehavior && behaviors.length > 1);
+  
+  lastRandomBehavior = behaviorIndex;
+  const randomBehavior = behaviors[behaviorIndex];
+  
+  console.log('Triggering random behavior:', randomBehavior.name);
+  randomBehavior();
+  
+  // Set next random behavior time (3-8 seconds)
+  nextRandomBehavior = Math.random() * 5 + 3;
+  randomBehaviorTimer = 0;
+  console.log('Next random behavior in:', nextRandomBehavior.toFixed(1), 'seconds');
+}
+
+// Actions
+const tailBtn = document.getElementById('tail');
+const meowBtn = document.getElementById('meow');
+
+tailBtn.onclick = ()=>{ 
+  if(boneTail){
+    // Enthusiastic tail wagging with increasing intensity
+    let intensity = 1.0;
+    let wags = 0;
+    const wagInterval = setInterval(()=>{
+      boneTail.rotation.y = Math.sin(wags * 0.8) * (0.6 * intensity);
+      boneTail.rotation.z = Math.sin(wags * 0.6) * (0.3 * intensity);
+      intensity = Math.min(2.0, intensity + 0.1); // Build up excitement
+      wags++;
+      if(wags > 25){ 
+        clearInterval(wagInterval);
+        // Gentle settle back to normal
+        let settle = 0;
+        const settleInterval = setInterval(()=>{
+          const factor = Math.max(0, 1 - settle * 0.2);
+          boneTail.rotation.y *= factor;
+          boneTail.rotation.z *= factor;
+          settle++;
+          if(settle > 10 || (Math.abs(boneTail.rotation.y) < 0.01 && Math.abs(boneTail.rotation.z) < 0.01)){ 
+            clearInterval(settleInterval);
+            boneTail.rotation.y = 0;
+            boneTail.rotation.z = 0;
+          }
+        }, 50);
+      }
+    }, 60);
+  } else {
+    // Fallback: excited body wiggle
+    if(model){
+      let wiggles = 0;
+      const originalY = currentRotationY;
+      const wiggleInterval = setInterval(()=>{
+        const wiggleAmount = Math.sin(wiggles * 0.5) * 0.1;
+        smoothTurnTo(originalY + wiggleAmount);
+        wiggles++;
+        if(wiggles > 20) {
+          clearInterval(wiggleInterval);
+          smoothTurnTo(originalY); // Return to original position
+        }
+      }, 80);
+    }
+  }
+};
+// Meow audio
+const meowAudio = new Audio('jennifur-meow.mp3');
+meowAudio.preload = 'auto';
+if(meowBtn) meowBtn.onclick = ()=>{ 
+  meowAudio.currentTime = 0; // Reset to start in case it's already playing
+  meowAudio.play().catch(e => console.log('Audio play failed:', e)); 
+};
+
+// Purr audio
+const purrAudio = new Audio('jennifur-purr.mp3');
+purrAudio.preload = 'auto';
+
+// New action buttons
+const stretchBtn = document.getElementById('stretch');
+const playBtn = document.getElementById('play');
+const purrBtn = document.getElementById('purr');
+const groomBtn = document.getElementById('groom');
+
+stretchBtn.onclick = ()=>{
+  if(!model) return;
+  const originalY = model.scale.y;
+  model.scale.y *= 1.3; // Stretch vertically
+  if(boneHead) boneHead.rotation.x -= 0.3; // Head up
+  setTimeout(()=>{ 
+    model.scale.y = originalY; 
+    if(boneHead) boneHead.rotation.x += 0.3; 
+  }, 1500);
+};
+
+
+// Create ball object
+function createBall() {
+  if(ball) {
+    scene.remove(ball);
+    ball = null;
+  }
+  
+  const ballGeometry = new THREE.SphereGeometry(0.12, 16, 12);
+  const ballMaterial = new THREE.MeshStandardMaterial({
+    color: 0xff4444,
+    roughness: 0.3,
+    metalness: 0.1
+  });
+  
+  ball = new THREE.Mesh(ballGeometry, ballMaterial);
+  ball.castShadow = true;
+  ball.receiveShadow = true;
+  scene.add(ball);
+  return ball;
+}
+
+// Throw ball function
+function throwBall() {
+  if(!model) return;
+  
+  // Create or reset ball
+  createBall();
+  
+  // Position ball near camera
+  const cameraPos = new THREE.Vector3();
+  camera.getWorldPosition(cameraPos);
+  
+  // Start ball slightly in front of camera
+  ballPosition.copy(cameraPos);
+  ballPosition.y = 1.0; // Ball height
+  ballPosition.add(new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion));
+  
+  // Random throw target within fence boundaries
+  const boundaryX = fenceWidth - 1;
+  const boundaryZ = fenceDepth - 1;
+  const targetX = (Math.random() * boundaryX * 2 - boundaryX);
+  const targetZ = (Math.random() * boundaryZ * 2 - boundaryZ);
+  
+  // Calculate throw arc
+  const throwTarget = new THREE.Vector3(targetX, 0, targetZ);
+  const throwDirection = throwTarget.clone().sub(ballPosition).normalize();
+  
+  // Set ball initial position and start ball mode
+  ball.position.copy(ballPosition);
+  ballMode = true;
+  ballTimer = 0;
+  ballBouncing = true;
+  ballVy = 4.0; // Initial upward velocity
+  ballChaseDelay = 0.5; // Cat waits 0.5 seconds before chasing
+  
+  // Store throw direction in ball userData for animation
+  ball.userData = {
+    direction: throwDirection,
+    target: throwTarget,
+    speed: 3.0
+  };
+  
+  // Prepare for chase but don't start immediately
+  disableAllMovementModes();
+  
+}
+
+playBtn.onclick = throwBall;
+
+purrBtn.onclick = ()=>{
+  if(!model) return;
+  
+  // Stop all movement and put cat in resting position
+  walking = false;
+  if(walkAction) walkAction.stop();
+  applyRestingScale();
+  target = null; // Clear any movement targets
+  disableAllMovementModes(); // Stop all movement modes
+  
+  // Play purr sound
+  purrAudio.currentTime = 0;
+  purrAudio.play().catch(e => console.log('Purr audio play failed:', e));
+  
+  let t = 0;
+  const originalX = model.position.x;
+  const originalZ = model.position.z;
+  const startTime = performance.now();
+  
+  const purrInterval = setInterval(()=>{
+    const elapsed = (performance.now() - startTime) / 1000; // Convert to seconds
+    
+    // Stop animation when audio duration is reached (max 2 seconds)
+    if(elapsed >= 2.0 || purrAudio.ended || purrAudio.paused){ 
+      clearInterval(purrInterval); 
+      model.position.x = originalX; 
+      model.position.z = originalZ; 
+      return;
+    }
+    
+    model.position.x = originalX + Math.sin(t * 8) * 0.02;
+    model.position.z = originalZ + Math.cos(t * 8) * 0.02;
+    t += 0.1;
+  }, 50);
+};
+
+groomBtn.onclick = ()=>{
+  if(!model) return;
+  const paw = bonePawR || bonePawL;
+  if(paw && boneHead){
+    // Store original positions
+    const originalPawZ = paw.rotation.z;
+    const originalPawX = paw.rotation.x;
+    const originalHeadX = boneHead.rotation.x;
+    const originalHeadY = boneHead.rotation.y;
+    const originalHeadZ = boneHead.rotation.z;
+    
+    let groomState = 'lift'; // 'lift', 'lick', 'wipe', 'lower'
+    let groomTimer = 0;
+    let lickCycles = 0;
+    
+    const groomInterval = setInterval(()=>{
+      groomTimer += 100;
+      
+      switch(groomState) {
+        case 'lift':
+          // Lift paw and position head
+          const liftProgress = Math.min(groomTimer / 200, 1); // 0.2 second lift
+          paw.rotation.x = originalPawX - (liftProgress * 1.2); // Lift paw up
+          paw.rotation.z = originalPawZ + (liftProgress * 0.4); // Angle paw inward
+          boneHead.rotation.x = originalHeadX + (liftProgress * 0.4); // Head down slightly
+          boneHead.rotation.y = originalHeadY + (paw === bonePawR ? -0.3 : 0.3) * liftProgress; // Turn toward paw
+          
+          if(groomTimer >= 200) {
+            groomState = 'lick';
+            groomTimer = 0;
+          }
+          break;
+          
+        case 'lick':
+          // Rapid licking motion with paw
+          const lickSpeed = 8;
+          const lickIntensity = Math.sin(groomTimer * lickSpeed * 0.01) * 0.3;
+          paw.rotation.z = originalPawZ + 0.4 + lickIntensity;
+          boneHead.rotation.x = originalHeadX + 0.4 + (lickIntensity * 0.5);
+          
+          if(groomTimer >= 300) { // 0.3 seconds of licking
+            groomState = 'wipe';
+            groomTimer = 0;
+            lickCycles++;
+          }
+          break;
+          
+        case 'wipe':
+          // Wipe motion across face/head
+          const wipeProgress = groomTimer / 200; // 0.2 seconds
+          const wipeMotion = Math.sin(wipeProgress * Math.PI * 2) * 0.6;
+          paw.rotation.z = originalPawZ + 0.4 + wipeMotion;
+          boneHead.rotation.y = originalHeadY + (paw === bonePawR ? -0.3 : 0.3) + (wipeMotion * 0.3);
+          boneHead.rotation.x = originalHeadX + 0.3 - (Math.abs(wipeMotion) * 0.2);
+          
+          if(groomTimer >= 200) {
+            groomState = 'lower';
+            groomTimer = 0;
+          }
+          break;
+          
+        case 'lower':
+          // Lower paw and return to normal position
+          const lowerProgress = Math.min(groomTimer / 200, 1); // 0.2 second return
+          const returnFactor = 1 - lowerProgress;
+          paw.rotation.x = originalPawX - (returnFactor * 1.2);
+          paw.rotation.z = originalPawZ + (returnFactor * 0.4);
+          boneHead.rotation.x = originalHeadX + (returnFactor * 0.4);
+          boneHead.rotation.y = originalHeadY + (paw === bonePawR ? -0.3 : 0.3) * returnFactor;
+          boneHead.rotation.z = originalHeadZ;
+          
+          if(groomTimer >= 200) {
+            clearInterval(groomInterval);
+            // Ensure complete reset to prevent stuck head position
+            paw.rotation.x = originalPawX;
+            paw.rotation.z = originalPawZ;
+            boneHead.rotation.x = originalHeadX;
+            boneHead.rotation.y = originalHeadY;
+            boneHead.rotation.z = originalHeadZ;
+          }
+          break;
+      }
+    }, 100);
+  } else if(boneHead) {
+    // Fallback: realistic head grooming motion
+    const originalHeadX = boneHead.rotation.x;
+    const originalHeadY = boneHead.rotation.y;
+    const originalHeadZ = boneHead.rotation.z;
+    
+    let t = 0;
+    const groomInterval = setInterval(()=>{
+      // Simulate licking own chest/body
+      boneHead.rotation.x = originalHeadX + 0.6 + Math.sin(t * 6) * 0.2; // Head down with licking motion
+      boneHead.rotation.z = originalHeadZ + Math.sin(t * 4) * 0.15; // Side to side motion
+      t += 0.15;
+      
+      if(t > Math.PI * 2){ // Shorter animation - 2 cycles instead of 4
+        clearInterval(groomInterval); 
+        // Ensure complete reset to prevent stuck head position
+        boneHead.rotation.x = originalHeadX; 
+        boneHead.rotation.y = originalHeadY;
+        boneHead.rotation.z = originalHeadZ; 
+      }
+    }, 100);
+  }
+};
+
+
+// Speed
+const speedSlider = document.getElementById('speed');
+const spv = document.getElementById('spv');
+speedSlider.oninput = ()=>{ speed = parseFloat(speedSlider.value); spv.textContent = speed.toFixed(1)+'x'; if(walkAction) walkAction.timeScale = speed; };
+
+// Chat history for context
+let chatHistory = [
+  {
+    role: 'system', 
+    content: 'You are Jennifur, a friendly and playful cat who can talk. You love to chat with humans, are curious about everything, and have a cat-like personality. Keep responses conversational and cat-themed when appropriate. Be helpful but maintain your feline charm.'
+  }
+];
+
+//Add api connection here
+
+// Chat → female voice (Web Speech API)
+let synth = window.speechSynthesis; let currentUtter = null;
+function pickFemale(voices){ const pref = ['en-US','en-GB','en-AU','en-CA']; return voices.find(v=>/female/i.test(v.name)||/female/i.test(v.voiceURI)) || voices.find(v=>pref.includes(v.lang)&&/Aria|Jenny|Sara|Natasha|Zira|Samantha|Victoria|Karen|Tessa|Serena|Hazel/i.test(v.name)) || voices.find(v=>pref.includes(v.lang)) || voices[0]; }
+function refreshVoices(){ const voices = synth.getVoices(); const v = pickFemale(voices||[]); const voiceEl = document.getElementById('voiceName'); if(voiceEl) voiceEl.textContent = 'voice: ' + (v?.name||'default'); return v; }
+let voice = refreshVoices(); speechSynthesis.onvoiceschanged = ()=>{ voice = refreshVoices(); };
+function talk(text){ 
+  if(!text) return; 
+  if(currentUtter){ synth.cancel(); currentUtter=null; } 
+  
+  // Save current state and turn to camera
+  saveCatState();
+  disableAllMovementModes(); // Stop all movement
+  
+  // Completely stop all walking and movement
+  walking = false;
+  if(walkAction) walkAction.stop();
+  applyRestingScale(); // Return to original scale
+  target = null; // Clear any movement targets
+  
+  turnCatToCamera();
+  
+  const u = new SpeechSynthesisUtterance(text); 
+  if(voice) u.voice=voice; 
+  u.rate=1.0; 
+  u.pitch=1.05; 
+  u.volume=1.0; 
+  u.onstart=()=>{ talkMode=true; }; 
+  u.onend=()=>{ 
+    talkMode=false; 
+    currentUtter=null; 
+    // Restore previous state when done talking
+    restoreCatState();
+  }; 
+  currentUtter=u; 
+  synth.speak(u); 
+}
+// New chat system with overlay
+document.getElementById('sendChat').onclick = async ()=>{ 
+  const t = document.getElementById('chatInput').value.trim(); 
+  if(t){ 
+    addChatMessage(t, true); // Add user message
+    document.getElementById('chatInput').value = ''; // Clear input
+    
+    // Show thinking message
+    const thinkingDiv = document.createElement('div');
+    thinkingDiv.className = 'chat-message system';
+    thinkingDiv.textContent = 'Jennifur is thinking...';
+    thinkingDiv.id = 'thinking-message';
+    document.getElementById('chatMessages').appendChild(thinkingDiv);
+    document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+    
+    // Get ChatGPT response
+    const response = await getChatGPTResponse(t);
+    
+    // Remove thinking message
+    const thinkingMsg = document.getElementById('thinking-message');
+    if(thinkingMsg) thinkingMsg.remove();
+    
+    addChatMessage(response, false); // Add Jennifur's response
+    talk(' ' + response); 
+  } 
+};
+
+// Allow Enter key to send message
+document.getElementById('chatInput').addEventListener('keypress', (e) => {
+  if(e.key === 'Enter') {
+    document.getElementById('sendChat').click();
+  }
+});
+// Stop talk function (no button, but keep functionality)
+function stopTalk() {
+  synth.cancel(); 
+  talkMode=false; 
+  currentUtter=null;
+  // Restore state when manually stopped
+  restoreCatState();
+}
+
+const stopTalkBtn = document.getElementById('stopTalk');
+if(stopTalkBtn) stopTalkBtn.onclick = stopTalk;
+const voiceRefreshBtn = document.getElementById('voiceRefresh');
+if(voiceRefreshBtn) voiceRefreshBtn.onclick = ()=>{ voice = refreshVoices(); };
+
+
+// Keyboard (space should not block chat typing, arrow keys for movement)
+window.addEventListener('keydown', (e)=>{
+  const el = document.activeElement;
+  const typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+  if(typing) return; // Don't handle keys while typing
+  
+  if(e.code==='Space'){ 
+    e.preventDefault(); 
+    if(walking){ stopWalkBtn.click(); } 
+  }
+  
+  // Arrow key controls for cat movement
+  if(!model) return;
+  
+  switch(e.code){
+    case 'ArrowUp':
+      e.preventDefault();
+      // Increase speed and start walking if stopped
+      speed = Math.min(2.5, speed + 0.3);
+      speedSlider.value = speed;
+      spv.textContent = speed.toFixed(1)+'x';
+      if(walkAction) walkAction.timeScale = speed;
+      
+      // Start walking if not already walking
+      if(!walking && walkAction) {
+        disableAllMovementModes(); // Stop other movement modes
+        walkAction.play();
+        walking = true;
+        applyWalkingScale(); // Compensate for animation shrinking
+      }
+      break;
+      
+    case 'ArrowDown':
+      e.preventDefault();
+      // Decrease speed
+      const newSpeed = speed - 0.3;
+      
+      // Stop walking if speed would go to minimum or below
+      if(newSpeed <= 0.2) {
+        speed = 0.2;
+        if(walking) {
+          walking = false;
+          walkAction?.stop();
+          disableAllMovementModes(); // Clear all movement modes
+          applyRestingScale(); // Return to original scale
+        }
+      } else {
+        speed = newSpeed;
+      }
+      
+      speedSlider.value = speed;
+      spv.textContent = speed.toFixed(1)+'x';
+      if(walkAction) walkAction.timeScale = speed;
+      break;
+      
+    case 'KeyW':
+      e.preventDefault();
+      if(!walking && walkAction){ 
+        walkAction.play(); 
+        walking = true; 
+        applyWalkingScale(); // Compensate for animation shrinking
+      }
+      const stepForward = 0.1 * speedMultiplier;
+      model.position.x += Math.sin(model.rotation.y) * stepForward;
+      model.position.z += Math.cos(model.rotation.y) * stepForward;
+      break;
+      
+    case 'KeyS':
+      e.preventDefault();
+      // 180 degree turn and start walking forward
+      smoothTurnBy(Math.PI);
+      if(!walking && walkAction){ 
+        walkAction.play(); 
+        walking = true; 
+        applyWalkingScale(); // Compensate for animation shrinking
+      }
+      break;
+      
+    case 'ArrowLeft':
+    case 'KeyA':
+      e.preventDefault();
+      smoothTurnBy(Math.PI/4); // Smooth 45-degree left turn
+      break;
+      
+    case 'ArrowRight':
+    case 'KeyD':
+      e.preventDefault();
+      smoothTurnBy(-Math.PI/4); // Smooth 45-degree right turn
+      break;
+      
+    case 'KeyM':
+      e.preventDefault();
+      meowAudio.currentTime = 0;
+      meowAudio.play().catch(e => console.log('Audio play failed:', e));
+      break;
+      
+    case 'KeyT':
+      e.preventDefault();
+      stretchBtn.click(); // T for sTretch
+      break;
+      
+      
+    case 'KeyP':
+      e.preventDefault();
+      purrBtn.click(); // P for Purr
+      break;
+      
+    case 'KeyY':
+      e.preventDefault();
+      playBtn.click(); // Y for plaY
+      break;
+      
+    case 'KeyG':
+      e.preventDefault();
+      groomBtn.click(); // G for Groom
+      break;
+      
+    case 'KeyJ':
+      e.preventDefault();
+      jumpBtn.click(); // J for Jump
+      break;
+  }
+});
+
+// Animate (additive head bob + jump physics)
+const tmpQuat = new THREE.Quaternion();
+let prevHeadAngleX = 0, prevHeadAngleZ = 0;
+function animate(){
+  const dt = Math.min(0.05, clock.getDelta());
+  if(mixer) mixer.update(dt);
+
+  // jump physics
+  if(isAirborne && model){
+    vy -= 9.8 * 0.75 * dt; // gravity
+    model.position.y += vy * dt;
+    if(model.position.y <= baseY){ model.position.y = baseY; isAirborne=false; vy=0; }
+  }
+
+  // Zoomies behavior - crazy fast movement!
+  if(zoomiesMode && model){
+    zoomiesTimer -= dt;
+    
+    // Move towards current zoomies target at high speed
+    if(zoomiesTarget) {
+      const dx = zoomiesTarget.x - model.position.x;
+      const dz = zoomiesTarget.z - model.position.z;
+      const distance = Math.sqrt(dx*dx + dz*dz);
+      
+      if(distance > 0.5) {
+        // Turn towards target quickly
+        const targetAngle = Math.atan2(dx, dz);
+        smoothTurnTo(targetAngle);
+        
+        // Move at zoomies speed
+        const step = zoomiesSpeed * speedMultiplier * dt;
+        model.position.x += Math.sin(model.rotation.y) * step;
+        model.position.z += Math.cos(model.rotation.y) * step;
+      } else {
+        // Reached target, pick a new one immediately
+        pickRandomZoomiesTarget();
+      }
+    }
+    
+    // Random direction changes for extra chaotic movement
+    if(Math.random() < 0.02) { // 2% chance per frame for direction change
+      pickRandomZoomiesTarget();
+    }
+    
+    // End zoomies after timer expires
+    if(zoomiesTimer <= 0) {
+      zoomiesMode = false;
+      zoomiesTarget = null;
+      zoomiesBtn.dataset.active = false;
+      zoomiesBtn.textContent = 'Zoomies';
+      // Return to normal wander mode
+      wanderMode = true;
+      if(wanderBtn) wanderBtn.dataset.active = true;
+      wanderState = 'walking';
+      wanderTimer = Math.random() * 3 + 2;
+    }
+  }
+
+  // Realistic wander behavior
+  if(wanderMode && model && !zoomiesMode){
+    wanderTimer -= dt;
+    
+    switch(wanderState) {
+      case 'walking':
+        // Move forward while walking
+        const step = 0.8 * speed * speedMultiplier * dt;
+        model.position.x += Math.sin(model.rotation.y) * step;
+        model.position.z += Math.cos(model.rotation.y) * step;
+        
+        if(wanderTimer <= 0) {
+          // Stop walking and start idle
+          walking = false;
+          walkAction?.stop();
+          wanderState = 'idle';
+          wanderTimer = Math.random() * 2 + 1; // Idle for 1-3 seconds
+          applyRestingScale(); // Return to original scale when stopping
+        }
+        break;
+        
+      case 'idle':
+        // Cat is standing still, looking around
+        if(wanderTimer <= 0) {
+          // Start turning
+          wanderState = 'turning';
+          wanderDirection = currentRotationY + (Math.random() - 0.5) * Math.PI * 1.5; // Turn up to 270 degrees
+          smoothTurnTo(wanderDirection);
+          wanderTimer = Math.random() * 1 + 0.5; // Turn for 0.5-1.5 seconds
+        }
+        break;
+        
+      case 'turning':
+        // Check if close to target rotation
+        const angleDiff = targetRotationY - currentRotationY;
+        const normalizedDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
+        
+        if(wanderTimer <= 0 || Math.abs(normalizedDiff) < 0.1) {
+          // Finished turning, start walking again
+          wanderState = 'walking';
+          wanderTimer = Math.random() * 4 + 2; // Walk for 2-6 seconds
+          if(walkAction) { walkAction.play(); walking = true; applyWalkingScale(); }
+        }
+        break;
+    }
+  }
+
+  // Smooth turning interpolation
+  if(model) {
+    const angleDiff = targetRotationY - currentRotationY;
+    const normalizedDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
+    
+    if(Math.abs(normalizedDiff) > 0.01) {
+      const turnAmount = turnSpeed * dt;
+      const clampedTurn = Math.sign(normalizedDiff) * Math.min(Math.abs(normalizedDiff), turnAmount);
+      currentRotationY += clampedTurn;
+      model.rotation.y = currentRotationY;
+    } else {
+      currentRotationY = targetRotationY;
+      model.rotation.y = currentRotationY;
+    }
+  }
+
+  // Target-based movement (come here functionality)
+  if(target && model && !wanderMode && !ballMode && !zoomiesMode) {
+    const dx = target.x - model.position.x;
+    const dz = target.z - model.position.z;
+    const distance = Math.sqrt(dx*dx + dz*dz);
+    
+    if(distance > 0.1) {
+      // Move towards target
+      const angleToTarget = Math.atan2(dx, dz);
+      smoothTurnTo(angleToTarget);
+      
+      const step = 1.2 * speed * speedMultiplier * dt; // Faster when coming to camera
+      model.position.x += Math.sin(model.rotation.y) * step;
+      model.position.z += Math.cos(model.rotation.y) * step;
+      
+      // Ensure cat is walking
+      if(!walking && walkAction) {
+        walkAction.play();
+        walking = true;
+        applyWalkingScale();
+      }
+    } else {
+      // Target reached - stop and return to normal
+      target = null;
+      if(walking) {
+        walking = false;
+        walkAction?.stop();
+        applyRestingScale(); // Return to normal scale
+      }
+      
+      // Turn cat towards camera when using come here
+      if(comeHereTarget) {
+        const cameraAngle = Math.atan2(camera.position.x - model.position.x, camera.position.z - model.position.z);
+        smoothTurnTo(cameraAngle);
+        comeHereTarget = false; // Reset flag
+      }
+    }
+  }
+
+  // manual forward walk (when no target)
+  else if(walking && model && !wanderMode && !ballMode && !target){
+    const step = 0.6 * speed * speedMultiplier * dt;
+    model.position.x += Math.sin(model.rotation.y) * step;
+    model.position.z += Math.cos(model.rotation.y) * step;
+  }
+
+  // Ball physics and animation
+  if(ballMode && ball && model) {
+    ballTimer += dt;
+    ballChaseDelay -= dt;
+    
+    if(ballBouncing) {
+      // Ball arc physics
+      const direction = ball.userData.direction;
+      const speed = ball.userData.speed;
+      
+      // Move ball horizontally
+      ballPosition.x += direction.x * speed * dt;
+      ballPosition.z += direction.z * speed * dt;
+      
+      // Ball gravity and bounce
+      ballVy -= 9.8 * dt;
+      ballPosition.y += ballVy * dt;
+      
+      // Bounce on ground
+      if(ballPosition.y <= 0.05) {
+        ballPosition.y = 0.05;
+        ballVy = Math.abs(ballVy) * 0.7; // Bounce with energy loss
+        
+        // Stop bouncing after low bounce
+        if(ballVy < 0.5) {
+          ballBouncing = false;
+          ballVy = 0;
+        }
+      }
+      
+      // Update ball visual position
+      ball.position.copy(ballPosition);
+    }
+    
+    // Cat only starts chasing after delay has passed
+    if(ballChaseDelay <= 0) {
+      // Cat chases ball continuously but only when ball is bouncing or far away
+      const catToBall = ballPosition.clone().sub(model.position);
+      catToBall.y = 0; // Only check horizontal distance
+      const distanceToBall = catToBall.length();
+      
+      // Only move toward ball if it's bouncing OR if cat is far away
+      if(ballBouncing || distanceToBall > 0.6) {
+        const angleToTarget = Math.atan2(catToBall.x, catToBall.z);
+        smoothTurnTo(angleToTarget);
+        
+        // Only move if ball is still bouncing or cat is far away
+        if(distanceToBall > 0.3) {
+          const chaseSpeed = 2.0 * speed * speedMultiplier * dt; // Much faster chase speed
+          model.position.x += Math.sin(model.rotation.y) * chaseSpeed;
+          model.position.z += Math.cos(model.rotation.y) * chaseSpeed;
+          
+          // Ensure cat is walking while chasing
+          if(!walking && walkAction) {
+            walkAction.play();
+            walking = true;
+            applyWalkingScale();
+          }
+        }
+      }
+      
+      // Cat catches ball only when very close and ball has stopped bouncing
+      if(distanceToBall < 0.3 && !ballBouncing) {
+        // Stop the ball mode and trigger celebration
+        ballMode = false;
+        if(ball) {
+          scene.remove(ball);
+          ball = null;
+        }
+        
+        // Cat plays with ball for a moment
+        console.log('Cat caught the ball!');
+        
+        // Stop walking
+        if(walking) {
+          walking = false;
+          walkAction?.stop();
+          applyRestingScale();
+        }
+        
+        // Make cat do excited jumps
+        let playJumps = 0;
+        const playInterval = setInterval(() => {
+          if(!isAirborne && playJumps < 3) { 
+            isAirborne = true; 
+            vy = 2.0; 
+            playJumps++;
+          } else if(playJumps >= 3) {
+            clearInterval(playInterval);
+            // Return to wander mode
+            setTimeout(() => {
+              wanderMode = true;
+              if(wanderBtn) wanderBtn.dataset.active = true;
+              wanderState = 'idle';
+              wanderTimer = 1;
+            }, 1000);
+          }
+        }, 600);
+      }
+    }
+    
+    // End ball mode after 10 seconds or when cat catches ball
+    if(ballTimer > 10 || !ballBouncing) {
+      ballMode = false;
+      if(ball) {
+        scene.remove(ball);
+        ball = null;
+      }
+      
+      // Return cat to wander mode
+      setTimeout(() => {
+        if(!ballMode) {
+          wanderMode = true;
+          if(wanderBtn) wanderBtn.dataset.active = true;
+          wanderState = 'idle';
+          wanderTimer = 1;
+        }
+      }, 2000);
+    }
+  }
+
+  // Check boundaries to keep cat contained
+  checkBoundaries();
+
+  // Random behavior system - always runs when model exists
+  if(model) {
+    randomBehaviorTimer += dt;
+    if(randomBehaviorTimer >= nextRandomBehavior) {
+      triggerRandomBehavior();
+    }
+  }
+
+  // tail wag
+  if(boneTail){ tailPhase += (talkMode ? 10 : 4) * dt; boneTail.rotation.y = Math.sin(tailPhase) * 0.35; }
+
+  // Head bob only when toggled, never overwrites base pose (more dramatic)
+  if(boneHead){
+    const freq = (talkMode && talkBob) ? 12.0 : (idleBob ? 3.2 : 0);
+    const ampX = (talkMode && talkBob) ? 0.18 : (idleBob ? 0.03 : 0); // More dramatic: was 0.09, now 0.18
+    const ampZ = (talkMode && talkBob) ? 0.09 : (idleBob ? 0.02 : 0); // More dramatic: was 0.045, now 0.09
+    const t = performance.now()/1000;
+    const targetX = freq ? Math.sin(t * freq) * ampX : 0;
+    const targetZ = freq ? Math.sin(t * freq * 0.66) * ampZ : 0;
+    const dX = targetX - prevHeadAngleX;
+    const dZ = targetZ - prevHeadAngleZ;
+    if(Math.abs(dX) > 1e-5){ const qx = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), dX); boneHead.quaternion.multiply(qx); }
+    if(Math.abs(dZ) > 1e-5){ const qz = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), dZ); boneHead.quaternion.multiply(qz); }
+    boneHead.updateMatrixWorld(true);
+    prevHeadAngleX = targetX; prevHeadAngleZ = targetZ;
+  }
+
+  // controls.update(); // Disabled for fixed camera
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+// Resize
+addEventListener('resize', ()=>{ renderer.setSize(stage.clientWidth, stage.clientHeight); camera.aspect = stage.clientWidth/stage.clientHeight; camera.updateProjectionMatrix(); });
+
+// Auto-load jennifur.glb on page load
+async function autoLoadJennifur(){
+  try{
+    overlay.textContent = 'Loading Jennifur...';
+    const gltf = await loadGLB('jennifur.glb');
+    useGLB(gltf);
+    console.log('Jennifur loaded successfully!');
+  } catch(e){
+    overlay.textContent = 'Jennifur not found. Drop a .glb here or use "Load .glb".';
+    console.log('Auto-load failed:', e?.message || e);
+    console.log('Make sure jennifur.glb is in the same folder as this HTML file');
+  }
+}
+
+// boot - wait a moment for everything to initialize
+setTimeout(autoLoadJennifur, 100);
+</script>
+</body>
+</html>
