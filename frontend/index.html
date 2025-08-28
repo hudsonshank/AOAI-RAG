@@ -449,7 +449,7 @@ const hemi = new THREE.HemisphereLight(0xffffff, 0x404060, .9); scene.add(hemi);
 const key = new THREE.DirectionalLight(0xffffff, 2.0); key.position.set(3,5,2); key.castShadow = true; key.shadow.mapSize.set(2048,2048); scene.add(key);
 
 // ground with jennifur-floor.jpg texture
-const floorTexture = textureLoader.load('jennifur-floor.jpg?' + Date.now());
+const floorTexture = textureLoader.load('Assets/jennifur-floor.jpg?' + Date.now());
 floorTexture.wrapS = THREE.RepeatWrapping;
 floorTexture.wrapT = THREE.RepeatWrapping;
 floorTexture.repeat.set(100, 100); // Much smaller texture, repeated more throughout scene
