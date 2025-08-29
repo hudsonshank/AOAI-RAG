@@ -2825,7 +2825,7 @@ addEventListener('resize', ()=>{ renderer.setSize(stage.clientWidth, stage.clien
 async function autoLoadJennifur(){
   try{
     overlay.textContent = 'Loading Jennifur...';
-    const gltf = await loadGLB('jennifur.glb');
+    const gltf = await loadGLB('Assets/jennifur.glb');
     useGLB(gltf);
     console.log('Jennifur loaded successfully!');
   } catch(e){
