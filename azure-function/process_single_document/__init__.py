@@ -51,14 +51,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if not folder_paths:
             folder_path = req_body.get('folder_path')
             folder_paths = [folder_path] if folder_path else [None]
+        
+        # Get recursive option (defaults to False if not specified)
+        recursive = req_body.get('recursive', False)
 
         processor = DocumentProcessor()
         results = []
         for folder_path in folder_paths:
             if folder_path:
-                result = processor.process_site_documents(site_name, folder_path)
+                result = processor.process_site_documents(site_name, folder_path, recursive)
             else:
-                result = processor.process_site_documents(site_name)
+                result = processor.process_site_documents(site_name, None, recursive)
             results.append(result)
 
         return func.HttpResponse(
@@ -88,7 +91,7 @@ class DocumentProcessor:
             
             # *** Cost Control Settings ***
             self.test_mode = os.environ.get('TEST_MODE', 'false').lower() == 'true'
-            self.max_documents_per_run = int(os.environ.get('MAX_DOCUMENTS_PER_RUN', '50'))
+            self.max_documents_per_run = int(os.environ.get('MAX_DOCUMENTS_PER_RUN', '100'))  # Increased from 50
             self.max_file_size_mb = int(os.environ.get('MAX_FILE_SIZE_MB', '100'))
             self.skip_doc_intelligence_for_large_files = True
             
@@ -154,7 +157,7 @@ class DocumentProcessor:
             logging.error(f'Failed to get Graph API token: {str(e)}')
             raise
 
-    def process_site_documents(self, site_name: str, folder_path: str = None) -> Dict[str, Any]:
+    def process_site_documents(self, site_name: str, folder_path: str = None, recursive: bool = False) -> Dict[str, Any]:
         """Process documents from a specific SharePoint site with comprehensive error tracking"""
         
         site_results = {
@@ -188,12 +191,13 @@ class DocumentProcessor:
             checkpoint = self._load_checkpoint(site_name, folder_path)
             
             # Get documents from site
-            documents = self._get_site_documents(site_id, folder_path, site_name, checkpoint)
+            documents = self._get_site_documents(site_id, folder_path, site_name, checkpoint, recursive)
             site_results["documents_found"] = len(documents)
-            logging.info(f"[BATCH] Found {len(documents)} documents in SharePoint for site '{site_name}' and folder '{folder_path or '/'}'")
+            logging.info(f"[BATCH] Found {len(documents)} documents in SharePoint for site '{site_name}' and folder '{folder_path or '/'}' (recursive: {recursive})")
             
-            # Add folder path to results for tracking
+            # Add folder path and recursive option to results for tracking
             site_results["folder_path"] = folder_path or "/"
+            site_results["recursive"] = recursive
 
             # Prioritize documents for RAG ingestion
             documents_to_process = self._prioritize_documents_for_testing(documents)
@@ -373,7 +377,7 @@ class DocumentProcessor:
         except Exception as e:
             logging.error(f'Failed to save checkpoint for {site_name}/{folder_path or "root"}: {str(e)}')
 
-    def _get_site_documents(self, site_id: str, folder_path: str = None, site_name: str = None, checkpoint: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+    def _get_site_documents(self, site_id: str, folder_path: str = None, site_name: str = None, checkpoint: Dict[str, Any] = None, recursive: bool = False) -> List[Dict[str, Any]]:
         """Get all documents from a SharePoint site, optionally targeting a specific folder with checkpoint support"""
         try:
             headers = {'Authorization': f'Bearer {self.graph_token}'}
@@ -403,11 +407,11 @@ class DocumentProcessor:
                             clean_folder_path = folder_path[len(f"{current_drive['name']}/"):]
                             break
                     
-                    logging.info(f"📁 Targeting specific folder: {clean_folder_path}")
-                    documents = self._get_drive_documents(drive_id, clean_folder_path, site_name, checkpoint)
+                    logging.info(f"📁 Targeting specific folder: {clean_folder_path} (recursive: {recursive})")
+                    documents = self._get_drive_documents(drive_id, clean_folder_path, site_name, checkpoint, recursive)
                 else:
                     # Start from root if no folder specified
-                    documents.extend(self._get_drive_documents(drive_id, None, site_name, checkpoint))
+                    documents.extend(self._get_drive_documents(drive_id, None, site_name, checkpoint, recursive))
             
             return documents
             
@@ -415,7 +419,7 @@ class DocumentProcessor:
             logging.error(f'Error getting documents from site {site_id}: {str(e)}')
             return []
 
-    def _get_drive_documents(self, drive_id: str, folder_path: str = None, site_name: str = None, checkpoint: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+    def _get_drive_documents(self, drive_id: str, folder_path: str = None, site_name: str = None, checkpoint: Dict[str, Any] = None, recursive: bool = False) -> List[Dict[str, Any]]:
         """Get documents from a specific drive with sequential pagination and checkpoint support"""
         try:
             headers = {'Authorization': f'Bearer {self.graph_token}'}
@@ -457,7 +461,7 @@ class DocumentProcessor:
                         item_name = item['name']
                         item_path = self._build_item_path(folder_path or '/', item_name)
                         
-                        # Check if it's a file (skip folders for now - focusing on targeted folder processing)
+                        # Check if it's a file
                         if 'file' in item:
                             file_ext = os.path.splitext(item_name)[1].lower()
                             
@@ -484,6 +488,31 @@ class DocumentProcessor:
                                     if next_url and site_name:
                                         self._save_checkpoint(site_name, folder_path, next_url)
                                     return all_documents
+                        
+                        # Handle folder processing based on recursive flag
+                        elif 'folder' in item and recursive:
+                            # If recursive is True, process subfolders
+                            subfolder_path = self._build_item_path(folder_path or '/', item_name)
+                            logging.info(f'🔄 Processing subfolder recursively: {subfolder_path}')
+                            
+                            try:
+                                # Get documents from subfolder
+                                subfolder_documents = self._get_drive_documents(drive_id, subfolder_path, site_name, None, recursive)
+                                all_documents.extend(subfolder_documents)
+                                
+                                # Check discovery limit after adding subfolder documents
+                                discovery_limit = self.max_documents_per_run * 10
+                                if len(all_documents) >= discovery_limit:
+                                    logging.info(f'🛑 Hit discovery limit ({discovery_limit}) after processing subfolder')
+                                    return all_documents
+                                    
+                            except Exception as e:
+                                logging.warning(f'Error processing subfolder {subfolder_path}: {str(e)}')
+                                continue
+                        
+                        elif 'folder' in item and not recursive:
+                            # If recursive is False, skip subfolders
+                            logging.info(f'⏭️ Skipping subfolder (non-recursive): {item_name}')
                     
                     # Get next page URL
                     next_url = items.get('@odata.nextLink')
@@ -608,11 +637,11 @@ class DocumentProcessor:
         return selected_docs
 
     def _is_document_processed(self, doc_id: str) -> bool:
-        """Check if document has already been processed by looking for summary file"""
+        """Check if document has already been processed by looking for first chunk"""
         try:
             blob_client = self.storage_client.get_blob_client(
                 container="jennifur-processed",
-                blob=f"review_{doc_id}_summary.json"
+                blob=f"{doc_id}_0.json"
             )
             return blob_client.exists()
         except Exception:
@@ -946,9 +975,9 @@ class DocumentProcessor:
                 "word_count": word_count,
                 "character_count": character_count,
                 "chunk": text,
-                "chunk_id": f"review_{doc_id}_0",
+                "chunk_id": f"{doc_id}_0",
                 "chunk_index": 0,
-                "parent_id": f"review_{doc_id}",
+                "parent_id": f"{doc_id}",
                 "processing_method": "reprocessed_enhanced"
             }
             chunks.append(chunk_data)
@@ -986,9 +1015,9 @@ class DocumentProcessor:
                 "word_count": word_count,
                 "character_count": character_count,
                 "chunk": chunk_content,
-                "chunk_id": f"review_{doc_id}_{chunk_index}",
+                "chunk_id": f"{doc_id}_{chunk_index}",
                 "chunk_index": chunk_index,
-                "parent_id": f"review_{doc_id}",
+                "parent_id": f"{doc_id}",
                 "processing_method": "reprocessed_enhanced"
             }
             
@@ -1070,29 +1099,6 @@ class DocumentProcessor:
                     overwrite=True,
                     content_type='application/json'
                 )
-            
-            # Also store a document summary for tracking
-            summary_data = {
-                "document_id": f"review_{doc_id}",
-                "filename": filename,
-                "document_path": doc_path,
-                "processed_timestamp": datetime.datetime.utcnow().isoformat() + "Z",
-                "status": "ready_for_rag",
-                "content_length": len(content),
-                "chunk_count": len(chunks),
-                "processing_method": "reprocessed_enhanced"
-            }
-            
-            summary_blob_client = self.storage_client.get_blob_client(
-                container="jennifur-processed",
-                blob=f"review_{doc_id}_summary.json"
-            )
-            
-            summary_blob_client.upload_blob(
-                json.dumps(summary_data, indent=2),
-                overwrite=True,
-                content_type='application/json'
-            )
             
             logging.info(f'Document {filename} stored in jennifur-processed container with {len(chunks)} individual chunk files')
             
