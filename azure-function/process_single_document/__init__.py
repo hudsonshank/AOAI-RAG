@@ -234,6 +234,8 @@ class DocumentProcessor:
                         site_results["documents_flagged"] += 1
                     elif action == "skipped":
                         site_results["documents_skipped"] += 1
+                        if result.get("reason") == "already_processed":
+                            logging.debug(f'⏭️ Document already processed: {result.get("path", "unknown")}')
                     elif action == "skipped_size_limit":
                         site_results["documents_skipped_size_limit"] += 1
                     elif action == "skipped_extraction_failed":
@@ -568,11 +570,14 @@ class DocumentProcessor:
         
         # *** NEW: Filter out already processed documents first ***
         unprocessed_documents = []
+        already_processed_count = 0
         for doc in documents:
             if not self._is_document_processed(doc['id']):
                 unprocessed_documents.append(doc)
+            else:
+                already_processed_count += 1
         
-        logging.info(f'📊 Found {len(unprocessed_documents)} unprocessed documents out of {len(documents)} total')
+        logging.info(f'📊 Document status: {len(unprocessed_documents)} new documents, {already_processed_count} already processed (total: {len(documents)})')
         
         # If we have enough unprocessed documents, use those
         if len(unprocessed_documents) >= self.max_documents_per_run:
@@ -878,11 +883,13 @@ class DocumentProcessor:
         """Extract client and PM metadata from SharePoint folder path"""
         import re
         
+        logging.info(f'🔍 Extracting client metadata from path: {doc_path}')
+        
         # Pattern to match "Client Name (PM-X)" format - more flexible
         patterns = [
-            r'/([^/]+)\s*\(PM-([A-Z])\)/',  # Standard format
-            r'/([^/]+)\s*\(PM-([a-zA-Z])\)/',  # Case insensitive PM code
-            r'/(Autobahn[^/]*)\s*\(PM-([A-Z])\)/',  # Specific Autobahn pattern
+            r'([^/]+)\s*\(PM-([A-Z])\)',  # Standard format without leading slash
+            r'([^/]+)\s*\(PM-([a-zA-Z])\)',  # Case insensitive PM code
+            r'(.*?)\s*\(PM-([A-Z])\)',  # Any text before PM pattern
         ]
         
         for pattern in patterns:
@@ -891,16 +898,16 @@ class DocumentProcessor:
                 client_name = match.group(1).strip()
                 pm_code = match.group(2).upper()
                 
-                # Map PM codes to names (you can expand this)
+                # Map PM codes to names - updated mapping
                 pm_mapping = {
                     'C': 'Caleb',
                     'K': 'Katherine', 
-                    'S': 'Sarah',
-                    'M': 'Michael',
-                    'A': 'Andrew'
+                    'S': 'Sam'
                 }
                 
                 pm_name = pm_mapping.get(pm_code, pm_code)
+                
+                logging.info(f'✅ Extracted client metadata: "{client_name}" (PM-{pm_code} = {pm_name})')
                 
                 return {
                     'client_name': client_name,
@@ -909,15 +916,7 @@ class DocumentProcessor:
                     'confidence_score': 0.9  # High confidence for pattern match
                 }
         
-        # Check for specific client patterns without PM codes
-        if 'autobahn' in doc_path.lower():
-            return {
-                'client_name': 'Autobahn',
-                'pm_code': 'N/A',
-                'pm_name': 'N/A',
-                'confidence_score': 0.7  # Medium confidence
-            }
-        
+        logging.warning(f'⚠️ Could not extract client metadata from path: {doc_path}')
         return None
 
     def _chunk_text(self, text: str, doc_id: str, doc_name: str, doc_path: str, client_metadata: Dict[str, Any] = None) -> List[Dict[str, Any]]:
@@ -1036,7 +1035,14 @@ class DocumentProcessor:
         return chunks
 
     def _categorize_document(self, filename: str, doc_path: str) -> str:
-        """Categorize document based on filename and path"""
+        """Categorize document based on path structure and filename"""
+        
+        # First try to extract from path structure (second level after client name)
+        path_category = self._extract_document_category_from_path(doc_path)
+        if path_category and path_category != "general":
+            return path_category
+        
+        # Fallback to filename-based categorization
         filename_lower = filename.lower()
         path_lower = doc_path.lower()
         
@@ -1080,6 +1086,40 @@ class DocumentProcessor:
         # Default category
         return "general"
 
+    def _extract_document_category_from_path(self, doc_path: str) -> str:
+        """Extract document category from the second level of the path after client name"""
+        import re
+        
+        # First, find the client folder pattern
+        client_pattern = r'([^/]+)\s*\(PM-[A-Z]\)/([^/]+)'
+        match = re.search(client_pattern, doc_path, re.IGNORECASE)
+        
+        if match:
+            category_folder = match.group(2).strip()
+            
+            # Extract category from patterns like "04. Roadmaps & Org Charts" -> "roadmaps_org_charts"
+            # Pattern: number followed by dot and words
+            category_pattern = r'^\d+\.\s*(.+)'
+            category_match = re.search(category_pattern, category_folder, re.IGNORECASE)
+            
+            if category_match:
+                category_text = category_match.group(1).strip()
+                # Clean and normalize the category
+                # Remove special characters, convert to lowercase, replace spaces with underscores
+                clean_category = re.sub(r'[^\w\s]', '', category_text)  # Remove special chars
+                clean_category = re.sub(r'\s+', '_', clean_category.strip().lower())  # Spaces to underscores, lowercase
+                
+                return clean_category
+            else:
+                # If no number pattern, use the folder name directly (cleaned)
+                clean_category = re.sub(r'[^\w\s]', '', category_folder)
+                clean_category = re.sub(r'\s+', '_', clean_category.strip().lower())
+                
+                if clean_category:
+                    return clean_category
+        
+        return "general"
+
     def _store_processed_document_with_chunks(self, doc_id: str, filename: str, content: str, doc_metadata: Dict[str, Any], doc_path: str, chunks: List[Dict[str, Any]]) -> None:
         """Store individual chunks as separate blobs in jennifur-processed container"""
         try:
@@ -1121,7 +1161,7 @@ class DocumentProcessor:
         try:
             # Check if already processed
             if self._is_document_processed(doc_id):
-                logging.info(f'Document {doc_path} already processed, skipping')
+                logging.info(f'📄✅ Document already processed, skipping: {doc_path} (found existing chunk file {doc_id}_0.json)')
                 return {
                     "action": "skipped", 
                     "reason": "already_processed", 
@@ -1175,7 +1215,10 @@ class DocumentProcessor:
                 client_metadata = self._extract_client_metadata_from_path(doc_path)
                 if client_metadata:
                     folder_context += f"Client: {client_metadata.get('client_name', 'Unknown')}\n"
-                    folder_context += f"PM: {client_metadata.get('pm_name', 'Unknown')}\n"
+                    folder_context += f"PM: {client_metadata.get('pm_name', 'Unknown')} (PM-{client_metadata.get('pm_code', 'N/A')})\n"
+                    logging.info(f'📋 Using client metadata: {client_metadata}')
+                else:
+                    logging.warning(f'⚠️ No client metadata found for document: {doc_path}')
                 
                 folder_context += "\n"
                 extracted_text = folder_context + extracted_text

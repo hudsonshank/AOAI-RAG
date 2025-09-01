@@ -101,33 +101,45 @@ class ClientAwareRAGEngine:
         Returns:
             OData filter string or None
         """
-        filters = []
+        # Build client/PM filter first
+        client_filters = []
         
         # Client name filter
         if client_name:
-            filters.append(f"client_name eq '{client_name}'")
+            client_filters.append(f"client_name eq '{client_name}'")
         
         # PM initial filter
         if pm_initial:
-            filters.append(f"pm_initial eq '{pm_initial.upper()}'")
+            client_filters.append(f"pm_initial eq '{pm_initial.upper()}'")
         
-        # Include internal documents
-        if include_internal and not client_name and not pm_initial:
-            filters.append("(is_client_specific eq false)")
-        elif client_name or pm_initial:
-            # If filtering by client, optionally include relevant internal docs
+        # Combine client/PM filters
+        client_filter_expr = None
+        if client_filters:
+            client_base = " and ".join(client_filters)
             if include_internal:
-                client_filter = " or ".join([f for f in filters])
-                filters = [f"({client_filter}) or (is_client_specific eq false)"]
+                # Include both client-specific AND internal documents
+                client_filter_expr = f"({client_base}) or (is_client_specific eq false)"
+            else:
+                # Only client-specific documents
+                client_filter_expr = client_base
+        elif include_internal:
+            # No client specified, include internal documents
+            client_filter_expr = "(is_client_specific eq false)"
+        
+        # Build final filter combining client and category filters
+        final_filters = []
+        
+        if client_filter_expr:
+            final_filters.append(f"({client_filter_expr})")
         
         # Document category filter
         if document_category:
-            filters.append(f"document_category eq '{document_category}'")
+            final_filters.append(f"document_category eq '{document_category}'")
         
-        if not filters:
+        if not final_filters:
             return None
         
-        return " and ".join(filters)
+        return " and ".join(final_filters)
     
     async def client_aware_search(self, 
                                 query: str,
