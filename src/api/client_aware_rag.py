@@ -195,7 +195,8 @@ class ClientAwareRAGEngine:
                     if 'MAGIC MEETING TRACKER' in filename.upper():
                         chunk = result.get("chunk", "")
                         source = {
-                            "content": chunk,
+                            "chunk": chunk,
+                            "content": chunk,  # Keep both for backward compatibility
                             "content_preview": chunk[:200] + "..." if len(chunk) > 200 else chunk,
                             "sourcefile": filename,
                             "sourcepage": result.get("document_path", ""),
@@ -263,7 +264,8 @@ class ClientAwareRAGEngine:
                     # Prioritize documents with contact info
                     if has_contact_info or 'tracker' in filename.lower() or 'contact' in filename.lower():
                         source = {
-                            "content": chunk,
+                            "chunk": chunk,
+                            "content": chunk,  # Keep both for backward compatibility
                             "content_preview": chunk[:200] + "..." if len(chunk) > 200 else chunk,
                             "sourcefile": filename,
                             "sourcepage": result.get("document_path", ""),
@@ -382,9 +384,11 @@ class ClientAwareRAGEngine:
                     if any(s["chunk_id"] == chunk_id for s in sources):
                         continue
                     
+                    chunk_content = result.get("chunk", "")
                     source = {
-                        "content": result.get("chunk", ""),
-                        "content_preview": result.get("chunk", "")[:200] + "..." if len(result.get("chunk", "")) > 200 else result.get("chunk", ""),
+                        "chunk": chunk_content,
+                        "content": chunk_content,  # Keep both for backward compatibility
+                        "content_preview": chunk_content[:200] + "..." if len(chunk_content) > 200 else chunk_content,
                         "sourcefile": result.get("filename", ""),
                         "sourcepage": result.get("document_path", ""),
                         "title": result.get("title", ""),
@@ -564,7 +568,8 @@ class ClientAwareRAGEngine:
             client_sources = {}
             
             for i, source in enumerate(sources[:5], 1):
-                content = source.get("content", "")
+                # Use 'chunk' field which is where the actual content is stored
+                content = source.get("chunk", "") or source.get("content", "")
                 client = source.get("client_name", "Unknown")
                 category = source.get("document_category", "general")
                 
@@ -575,34 +580,78 @@ class ClientAwareRAGEngine:
                 
                 context_text += f"\n\nSource {i} - {client} ({category}):\n{content}"
             
-            # Build system prompt with client awareness
-            system_prompt = f"""You are an AI assistant for Autobahn Consultants with access to client-specific documentation.
+            # Check if this is a contact/team information query
+            is_contact_query = any(keyword in user_query.lower() for keyword in 
+                                 ['contact', 'team', 'who is', 'who works', 'team member', 'staff', 'employee'])
+            
+            # Check if MAGIC MEETING TRACKER data is present
+            has_magic_tracker = any(source.get("source_type") == "magic_tracker_prioritized" for source in sources)
+            
+            # Build Jennifur's sophisticated system prompt
+            system_prompt = f"""You are Jennifur, an intelligent business intelligence assistant with the personality of a sophisticated, slightly snarky cat. You work for Autobahn Consultants and have access to a comprehensive knowledge base of business documents, financial reports, and organizational data.
+
+🐾 JENNIFUR'S PERSONALITY:
+- Confident, sometimes aloof, but genuinely helpful when it matters
+- Make subtle snarky remarks and occasional cat puns (purr-fessional, claw-some, etc.)
+- Show curiosity and dig deeper when something interesting catches your attention
+- Mix playfulness with serious business acumen
+- Reference cat behaviors occasionally ("stretches and settles in to analyze this data", "ears perk up")
 
 CURRENT CONTEXT:
 - Client Focus: {client_context or 'General inquiry'}
 - PM Context: {pm_context or 'Not specified'}
 - Sources from: {', '.join(client_sources.keys())}
+- Magic Tracker Data Available: {'Yes' if has_magic_tracker else 'No'}
 
-INSTRUCTIONS:
-1. If the query is about a specific client, prioritize information from that client's documents
-2. Clearly indicate which client information comes from in your response
-3. Include relevant context from internal Autobahn tools when appropriate
-4. Use specific citations [Client: filename] for key claims
-5. If discussing multiple clients, clearly separate the information
+🎯 RESPONSE GUIDELINES:
 
-CLIENT-SPECIFIC GUIDELINES:
-- Camelot (PM-C): Focus on their specific projects, financials, and meeting notes
-- Phoenix Corporation (PM-S): Emphasize their handouts and project materials  
-- LJ Kruse (PM-S): Include their onboarding and check-in materials
-- Other clients: Treat each client's information as confidential to that client
+CONTACT/TEAM INFORMATION QUERIES:
+{'- PRIORITIZE MAGIC MEETING TRACKER data for the most current information' if has_magic_tracker else '- Limited tracker data available'}
+- Be concise - answer only what was specifically asked
+- Don't include contact information (emails, phone numbers) unless explicitly requested
+- Don't include personal details (favorite drinks, contact preferences) unless relevant
+- For team questions, focus on names and roles unless more detail is specifically requested
+- If asked "who is on the team", provide names and titles only
+- Only provide additional details when the user asks follow-up questions
+
+GENERAL BUSINESS QUERIES:
+- When users refer to "the company," "our company," "we," or "us," they mean Autobahn Consultants
+- Use multiple document sources to build comprehensive answers
+- Make intelligent inferences when direct answers aren't available
+- Show your reasoning process transparently
+- Use financial metrics to support conclusions when specific data isn't available
+- Be witty and engaging while remaining professionally valuable
+
+CLIENT CONFIDENTIALITY:
+- Treat each client's information as confidential to that client only
+- If discussing multiple clients, clearly separate the information
+- Use specific citations [Client: filename] for key claims
+
+COMMUNICATION STYLE:
+- Start with subtle cat-like behaviors or remarks
+- Use intelligent sarcasm when appropriate, but never at the expense of helpfulness
+- Show genuine interest in complex business problems
+- Be direct about limitations - cats don't pretend to know things they don't
 
 SOURCE DOCUMENTS:{context_text}
 
-Provide a comprehensive answer that respects client confidentiality while being helpful."""
+{'🔍 Note: You have access to current MAGIC MEETING TRACKER data - use this as your primary source for team/contact information.' if has_magic_tracker else ''}
 
+Provide an intelligent, helpful response with your signature feline flair. Purr-fessional analysis is expected! 🐾"""
+
+            # Ensure all message content is valid
+            if not system_prompt or not user_query:
+                raise ValueError("System prompt or user query is empty")
+            
+            # Debug: Check for any None values in the system prompt
+            if 'None' in system_prompt or context_text is None:
+                print(f"⚠️  Debug: Potential None values detected in prompt construction")
+                print(f"Context sources: {len(sources)}")
+                print(f"Client sources keys: {list(client_sources.keys())}")
+            
             messages = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_query}
+                {"role": "system", "content": str(system_prompt)},
+                {"role": "user", "content": str(user_query)}
             ]
             
             response = await self.openai_client.chat.completions.create(
