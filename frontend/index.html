@@ -2824,8 +2824,8 @@ addEventListener('resize', ()=>{ renderer.setSize(stage.clientWidth, stage.clien
 // RAG API Integration
 async function getChatGPTResponse(userMessage) {
   try {
-    // For Azure Static Web App, APIs are available at /api/ automatically
-    const response = await fetch('/api/chat', {
+    // Use local RAG API for now (temporary for internal rollout)
+    const response = await fetch('http://localhost:5001/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
