@@ -1,29 +1,29 @@
 #!/usr/bin/env python3
 """
-Local Flask server for Jennifur RAG system
-Run this to test the RAG system locally without Azure Functions
+Production Flask server for Jennifur RAG system on Azure App Service
 """
 
 import os
 import sys
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from dotenv import load_dotenv
 import asyncio
 import logging
 
-# Load environment variables
-load_dotenv()
+# Configure logging for Azure App Service
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 # Import the RAG engine
-from api.client_aware_rag import ClientAwareRAGEngine
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+try:
+    from api.client_aware_rag import ClientAwareRAGEngine
+    logger.info("Successfully imported ClientAwareRAGEngine")
+except ImportError as e:
+    logger.error(f"Failed to import RAG engine: {e}")
+    ClientAwareRAGEngine = None
 
 # Create Flask app
 app = Flask(__name__)
@@ -36,6 +36,10 @@ def initialize_rag():
     """Initialize the RAG engine"""
     global rag_engine
     try:
+        if ClientAwareRAGEngine is None:
+            logger.error("ClientAwareRAGEngine not available")
+            return False
+            
         logger.info("Initializing RAG engine...")
         rag_engine = ClientAwareRAGEngine()
         logger.info("RAG engine initialized successfully")
@@ -44,12 +48,25 @@ def initialize_rag():
         logger.error(f"Failed to initialize RAG engine: {str(e)}")
         return False
 
+@app.route('/', methods=['GET'])
+def home():
+    """Home endpoint"""
+    return jsonify({
+        "service": "Jennifur RAG API",
+        "status": "running",
+        "endpoints": {
+            "health": "/health",
+            "chat": "/api/chat"
+        }
+    })
+
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
     return jsonify({
         "status": "healthy",
-        "rag_initialized": rag_engine is not None
+        "rag_initialized": rag_engine is not None,
+        "environment": "production"
     })
 
 @app.route('/api/chat', methods=['POST', 'OPTIONS'])
@@ -87,7 +104,7 @@ def chat():
                     messages=messages,
                     client_context=data.get("client_context"),
                     pm_context=data.get("pm_context"),
-                    session_id=data.get('session_id', 'local-session')
+                    session_id=data.get('session_id', 'production-session')
                 )
             )
             logger.info("Successfully generated RAG response")
@@ -102,28 +119,13 @@ def chat():
         logger.error(f"Error in chat endpoint: {str(e)}")
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
-if __name__ == '__main__':
-    # Initialize RAG engine on startup
+# Initialize RAG engine on startup
+try:
     initialize_rag()
-    
-    # Get port from environment or use default
-    port = int(os.getenv('API_PORT', 5001))
-    
-    print(f"""
-    ╔══════════════════════════════════════════════╗
-    ║     Jennifur RAG Local Server Starting       ║
-    ╠══════════════════════════════════════════════╣
-    ║  Server running at: http://localhost:{port}    ║
-    ║  Health check: http://localhost:{port}/health ║
-    ║  Chat API: http://localhost:{port}/api/chat   ║
-    ╠══════════════════════════════════════════════╣
-    ║  Press Ctrl+C to stop the server             ║
-    ╚══════════════════════════════════════════════╝
-    """)
-    
-    # Run the Flask app
-    app.run(
-        host='0.0.0.0',
-        port=port,
-        debug=os.getenv('FLASK_DEBUG', 'true').lower() == 'true'
-    )
+except Exception as e:
+    logger.error(f"Failed to initialize RAG on startup: {e}")
+
+if __name__ == '__main__':
+    # For local testing
+    port = int(os.getenv('PORT', 5001))
+    app.run(host='0.0.0.0', port=port, debug=False)

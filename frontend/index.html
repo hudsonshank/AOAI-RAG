@@ -3148,9 +3148,13 @@ addEventListener('resize', ()=>{ renderer.setSize(stage.clientWidth, stage.clien
 async function getChatGPTResponse(userMessage) {
   try {
     // Determine which endpoint to use based on hostname
-    const apiEndpoint = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:'
+    const apiEndpoint = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
       ? 'http://localhost:5001/api/chat'  // Local development
-      : 'https://jennifur-pii-processor-dkfddhhggvarbxcr.eastus2-01.azurewebsites.net/api/chat'; // Production
+      : 'https://jennifur-api.azurewebsites.net/api/chat'; // Production - App Service URL
+    
+    console.log('Current hostname:', window.location.hostname);
+    console.log('Current protocol:', window.location.protocol);
+    console.log('Using API endpoint:', apiEndpoint);
     
     const response = await fetch(apiEndpoint, {
       method: 'POST',
@@ -3174,7 +3178,9 @@ async function getChatGPTResponse(userMessage) {
     
   } catch (error) {
     console.error('Error calling RAG API:', error);
-    return 'I\'m having trouble connecting to my knowledge base right now. Please try again in a moment!';
+    console.error('Error details:', error.message);
+    // Show more detailed error for debugging
+    return `I'm having trouble connecting to my knowledge base right now. Error: ${error.message}. Please try again in a moment!`;
   }
 }
 
