@@ -60,11 +60,12 @@
     z-index:999;
   }
   
-  /* Floating Chat Overlay - Much Smaller */
+  /* Floating Chat Overlay - Bottom Center */
   .chat-overlay{
     position:fixed; 
     bottom:15px; 
-    right:15px; 
+    left:50%;
+    transform:translateX(-50%);
     width:clamp(240px, 25vw, 320px); 
     height:clamp(180px, 22vh, 250px); 
     background:var(--chat-surface); 
@@ -235,14 +236,14 @@
   .drop-hint{border:1px dashed var(--border-dark); border-radius:6px; padding:8px; font-size:11px; color:var(--text-dark-muted); text-align:center; background:rgba(255,255,255,0.05)}
   footer{padding:8px 16px; text-align:center; color:var(--text-dark-muted); font-size:11px; background:linear-gradient(135deg, var(--dark-surface), var(--primary-darker)); border-top:2px solid var(--border-dark); box-shadow:0 -2px 8px rgba(0,0,0,0.2)}
   
-  /* Column Layout Styles - Much Smaller */
+  /* Column Layout Styles - Even Smaller */
   .left-column, .right-column{
     display:flex; 
     flex-direction:column; 
     justify-content:flex-start; 
-    gap:clamp(4px, 0.8vw, 6px); 
-    min-width:clamp(140px, 18vw, 180px); 
-    max-width:clamp(180px, 22vw, 220px); 
+    gap:clamp(3px, 0.6vw, 4px); 
+    min-width:clamp(100px, 14vw, 130px); 
+    max-width:clamp(130px, 16vw, 160px); 
     flex:0 0 auto;
   }
   .center-column{opacity:0; pointer-events:none} /* Invisible spacer for main scene */
@@ -259,32 +260,32 @@
   .chat-controls button:hover{background:linear-gradient(135deg, var(--primary), var(--primary-dark)) !important; color:white !important; transform:translateY(-1px) !important}
   .chat-controls .badge{background:var(--chat-surface-light) !important; color:var(--text-chat-muted) !important; border:1px solid var(--border-light) !important; box-shadow:inset 0 1px 2px rgba(0,0,0,0.05) !important}
   
-  /* Much Smaller Action Groups */
+  /* Ultra Small Action Groups */
   .left-column .group, .right-column .group{
-    padding:clamp(6px, 1.2vw, 10px); 
+    padding:clamp(4px, 0.8vw, 6px); 
     background:linear-gradient(145deg, var(--dark-surface-lighter), var(--dark-surface-light)); 
     border:1px solid rgba(5,150,105,0.3);
-    border-radius:6px; 
-    box-shadow:0 4px 12px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+    border-radius:4px; 
+    box-shadow:0 2px 6px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
     backdrop-filter:blur(10px);
     width:100%;
-    margin-bottom:clamp(4px, 0.8vw, 6px);
+    margin-bottom:clamp(3px, 0.6vw, 4px);
     max-width:100%;
   }
   .left-column button, .right-column button{
-    padding:clamp(6px, 1.2vw, 8px) clamp(8px, 1.5vw, 10px); 
-    font-size:clamp(9px, 1.2vw, 11px);
+    padding:clamp(4px, 0.8vw, 6px) clamp(6px, 1vw, 8px); 
+    font-size:clamp(8px, 1vw, 9px);
     width:100%;
-    min-height:clamp(28px, 4vh, 35px); 
+    min-height:clamp(22px, 3vh, 28px); 
     font-weight:600;
-    border-radius:4px;
+    border-radius:3px;
     background:linear-gradient(145deg, var(--primary), var(--primary-dark));
     border:1px solid var(--primary-light);
     color:white;
-    box-shadow:0 2px 4px rgba(5,150,105,0.4), inset 0 1px rgba(255,255,255,0.2);
+    box-shadow:0 1px 2px rgba(5,150,105,0.4), inset 0 1px rgba(255,255,255,0.2);
     transition:all .2s ease;
     text-shadow:0 1px rgba(0,0,0,0.4);
-    letter-spacing:0.2px;
+    letter-spacing:0.1px;
     text-transform:uppercase;
     position:relative;
     overflow:hidden;
@@ -375,15 +376,15 @@
     align-items:center;
   }
   
-  /* Mobile & Responsive Media Queries - Ultra Compact */
+  /* Mobile & Responsive Media Queries - Ultra Compact with Centered Chat */
   @media (max-width: 1200px) {
     .panel {
-      padding: clamp(6px, 1.2vw, 10px);
-      gap: clamp(4px, 0.8vw, 6px);
+      padding: clamp(4px, 0.8vw, 6px);
+      gap: clamp(3px, 0.6vw, 4px);
     }
     .left-column, .right-column {
-      min-width: clamp(120px, 16vw, 160px);
-      max-width: clamp(160px, 20vw, 200px);
+      min-width: clamp(90px, 12vw, 120px);
+      max-width: clamp(120px, 14vw, 150px);
     }
   }
   
@@ -391,55 +392,55 @@
     .panel {
       flex-direction: column;
       align-items: center;
-      padding: 8px;
-      gap: 6px;
-      max-height: 25vh;
+      padding: 6px;
+      gap: 4px;
+      max-height: 20vh;
     }
     .left-column, .right-column {
       width: 100%;
-      max-width: 220px;
+      max-width: 180px;
     }
     .chat-overlay {
       width: clamp(200px, 60vw, 280px);
       height: clamp(160px, 25vh, 200px);
       bottom: 10px;
-      right: 10px;
+      left: 50%;
+      transform: translateX(-50%);
     }
   }
   
   @media (max-width: 600px) {
     .panel {
-      padding: 6px;
-      max-height: 30vh;
+      padding: 4px;
+      max-height: 25vh;
     }
     .chat-overlay {
-      width: clamp(180px, 70vw, 240px);
+      width: clamp(180px, 80vw, 240px);
       height: clamp(140px, 30vh, 180px);
       bottom: 8px;
-      right: 8px;
-      left: 8px;
-      transform: none;
+      left: 50%;
+      transform: translateX(-50%);
     }
     .left-column .group, .right-column .group {
-      padding: clamp(4px, 1vw, 6px);
+      padding: clamp(3px, 0.8vw, 4px);
     }
     .left-column button, .right-column button {
-      min-height: clamp(24px, 3vh, 30px);
-      font-size: clamp(8px, 1vw, 10px);
+      min-height: clamp(20px, 2.5vh, 25px);
+      font-size: clamp(7px, 0.9vw, 8px);
     }
   }
   
   @media (max-width: 480px) {
     .panel {
-      padding: 4px;
-      gap: 4px;
+      padding: 3px;
+      gap: 3px;
     }
     .chat-overlay {
-      width: calc(100vw - 12px);
+      width: calc(100vw - 16px);
       height: clamp(120px, 35vh, 160px);
       bottom: 6px;
-      right: 6px;
-      left: 6px;
+      left: 50%;
+      transform: translateX(-50%);
     }
   }
 </style>
