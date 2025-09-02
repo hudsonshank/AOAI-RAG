@@ -2821,6 +2821,36 @@ requestAnimationFrame(animate);
 // Resize
 addEventListener('resize', ()=>{ renderer.setSize(stage.clientWidth, stage.clientHeight); camera.aspect = stage.clientWidth/stage.clientHeight; camera.updateProjectionMatrix(); });
 
+// RAG API Integration
+async function getChatGPTResponse(userMessage) {
+  try {
+    // For Azure Static Web App, APIs are available at /api/ automatically
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: 'user', content: userMessage }
+        ],
+        session_id: 'jennifur-frontend'
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.message?.content || 'Sorry, I had trouble understanding that. Could you try asking again?';
+    
+  } catch (error) {
+    console.error('Error calling RAG API:', error);
+    return 'I\'m having trouble connecting to my knowledge base right now. Please try again in a moment!';
+  }
+}
+
 // Auto-load jennifur.glb on page load
 async function autoLoadJennifur(){
   try{
