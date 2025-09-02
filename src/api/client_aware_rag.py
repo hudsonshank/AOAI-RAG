@@ -41,6 +41,7 @@ class ClientAwareRAGEngine:
         
         # Client detection patterns
         self.client_keywords = {
+            'allbrite': ['allbrite'],
             'camelot': ['camelot', 'camelot corp'],
             'phoenix': ['phoenix', 'phoenix corporation', 'phoenix corp'],
             'lj kruse': ['lj kruse', 'kruse', 'ljk'],
@@ -49,8 +50,30 @@ class ClientAwareRAGEngine:
             'ce floyd': ['ce floyd', 'floyd'],
             'tendit': ['tendit'],
             'twining': ['twining'],
-            'neptune': ['neptune'],
-            'secs': ['secs']
+            'neptune': ['neptune', 'neptune plumbing'],
+            'secs': ['secs', 'southeast concrete systems'],
+            'brets electric': ['brets', 'brets electric'],            
+            'cmr': ['cmr'],
+            'curexa pharmacy': ['curexa pharmacy', 'curexa'],
+            'desert de oro': ['ddo', 'desert de oro'],
+            'eckart': ['eckart', 'eckart supply'],
+            'eden': ['eden health', 'eden'],
+            'gideon': ['gideon'],
+            'i3': ['i3'],
+            'indium': ['indium'],
+            'inpwr': ['inpower', 'inpwr'],
+            'rxharmony': ['rxharmony', 'rx harmony', 'joi'],
+            'jtl': ['jtl construction', 'jtl'],
+            'las colinas pharmacy': ['las colinas pharmacy', 'las colinas'],
+            'park square homes': ['park square homes', 'psh'],
+            'peak': ['peak', 'bellwether enterprises', 'bellwether'],
+            'prc': ['prc'],
+            'revelation pharma': ['revelation pharma', 'rev', 'rev pharma'],
+            'skybeck': ['skybeck'],
+            'talent groups': ['talent groups'],
+            'town & country': ['town & country', 'town and country'],
+            'wellbore': ['wellbore'],
+            'woodward': ['woodward'],
         }
         
         print("✅ Client-Aware RAG Engine initialized")
@@ -71,7 +94,11 @@ class ClientAwareRAGEngine:
         for client_name, keywords in self.client_keywords.items():
             for keyword in keywords:
                 if keyword in query_lower:
-                    return client_name.title()
+                    # Return proper client name - use uppercase for known acronyms
+                    if client_name.lower() in ['jtl', 'cmr', 'prc', 'i3', 'psh', 'ddo']:
+                        return client_name.upper()
+                    else:
+                        return client_name.title()
         
         # Check for PM mentions (e.g., "PM-C documents")
         if 'pm-c' in query_lower:
@@ -141,13 +168,147 @@ class ClientAwareRAGEngine:
         
         return " and ".join(final_filters)
     
+    async def _search_magic_meeting_tracker(self, query: str, client_name: Optional[str], top: int) -> List[Dict]:
+        """Search MAGIC MEETING TRACKER first - most up-to-date client data"""
+        magic_sources = []
+        
+        # Search MAGIC MEETING TRACKER specifically
+        magic_tracker_queries = [
+            f"MAGIC MEETING TRACKER {client_name}" if client_name else "MAGIC MEETING TRACKER",
+            f"MAGIC MEETING TRACKER {query}",
+            "MAGIC MEETING TRACKER"
+        ]
+        
+        for search_query in magic_tracker_queries[:2]:  # Limit to most relevant queries
+            try:
+                results = self.search_client.search(
+                    search_text=search_query,
+                    search_fields=["filename", "chunk"],
+                    search_mode="any",
+                    top=5
+                )
+                
+                for result in results:
+                    filename = result.get("filename", "")
+                    
+                    # Only include actual MAGIC MEETING TRACKER documents
+                    if 'MAGIC MEETING TRACKER' in filename.upper():
+                        chunk = result.get("chunk", "")
+                        source = {
+                            "content": chunk,
+                            "content_preview": chunk[:200] + "..." if len(chunk) > 200 else chunk,
+                            "sourcefile": filename,
+                            "sourcepage": result.get("document_path", ""),
+                            "title": result.get("title", ""),
+                            "chunk_id": result.get("chunk_id", ""),
+                            "score": float(result.get("@search.score", 0)) + 2.0,  # BIG score boost for MAGIC TRACKER
+                            
+                            # Client metadata
+                            "client_name": result.get("client_name", "Unknown"),
+                            "pm_initial": result.get("pm_initial", "N/A"),
+                            "document_category": result.get("document_category", "current_data"),
+                            "is_client_specific": result.get("is_client_specific", False),
+                            
+                            "source_type": "magic_tracker_prioritized"
+                        }
+                        
+                        # Avoid duplicates
+                        if not any(s["chunk_id"] == source["chunk_id"] for s in magic_sources):
+                            magic_sources.append(source)
+                        
+                        if len(magic_sources) >= top // 2:  # Get up to half results from MAGIC TRACKER
+                            break
+            except Exception as e:
+                print(f"Error searching MAGIC MEETING TRACKER: {str(e)}")
+                continue
+        
+        return magic_sources[:top // 2]
+    
+    async def _search_additional_contact_info(self, query: str, client_name: Optional[str], top: int, existing_sources: List[Dict]) -> List[Dict]:
+        """Search for additional contact information beyond MAGIC MEETING TRACKER"""
+        contact_sources = []
+        
+        # Search for other contact-related documents
+        other_contact_queries = [
+            f"{client_name} contact" if client_name else "contact",
+            f"{client_name} tracker" if client_name else "tracker",
+            "weekly tracker contact email phone",
+            "contact list directory"
+        ]
+        
+        existing_chunk_ids = {s["chunk_id"] for s in existing_sources}
+        
+        for search_query in other_contact_queries:
+            try:
+                results = self.search_client.search(
+                    search_text=search_query,
+                    search_fields=["filename", "chunk"],
+                    search_mode="any",
+                    top=3
+                )
+                
+                for result in results:
+                    chunk_id = result.get("chunk_id", "")
+                    if chunk_id in existing_chunk_ids:
+                        continue  # Skip duplicates
+                    
+                    chunk = result.get("chunk", "")
+                    filename = result.get("filename", "")
+                    
+                    # Check if this document contains contact information
+                    chunk_lower = chunk.lower()
+                    has_contact_info = any(indicator in chunk_lower for indicator in 
+                                         ['email', 'phone', 'cell', 'contact', '@', 'preferred contact'])
+                    
+                    # Prioritize documents with contact info
+                    if has_contact_info or 'tracker' in filename.lower() or 'contact' in filename.lower():
+                        source = {
+                            "content": chunk,
+                            "content_preview": chunk[:200] + "..." if len(chunk) > 200 else chunk,
+                            "sourcefile": filename,
+                            "sourcepage": result.get("document_path", ""),
+                            "title": result.get("title", ""),
+                            "chunk_id": chunk_id,
+                            "score": float(result.get("@search.score", 0)) + 0.8,  # Moderate boost for other contact docs
+                            
+                            # Client metadata
+                            "client_name": result.get("client_name", "Unknown"),
+                            "pm_initial": result.get("pm_initial", "N/A"),
+                            "document_category": result.get("document_category", "contact"),
+                            "is_client_specific": result.get("is_client_specific", False),
+                            
+                            "source_type": "contact_supplementary"
+                        }
+                        
+                        contact_sources.append(source)
+                        existing_chunk_ids.add(chunk_id)
+                        
+                        if len(contact_sources) >= (top // 4):  # Limit additional contact sources
+                            break
+            except Exception as e:
+                print(f"Error searching additional contact info: {str(e)}")
+                continue
+        
+        return contact_sources[:(top // 4)]
+    
+    def is_contact_information_query(self, query: str) -> bool:
+        """Detect if query is asking for contact information"""
+        contact_keywords = [
+            'contact', 'phone', 'email', 'cell', 'number', 'reach', 'call',
+            'meeting tracker', 'directory', 'who is', 'contact info',
+            'how to reach', 'phone number', 'email address', 'contact details'
+        ]
+        query_lower = query.lower()
+        return any(keyword in query_lower for keyword in contact_keywords)
+    
     async def client_aware_search(self, 
                                 query: str,
                                 client_name: Optional[str] = None,
                                 pm_initial: Optional[str] = None,
                                 document_category: Optional[str] = None,
                                 top: int = 5,
-                                include_internal: bool = True) -> Dict[str, Any]:
+                                include_internal: bool = True,
+                                prioritize_contact_info: bool = None) -> Dict[str, Any]:
         """
         Perform client-aware search with metadata filtering
         
@@ -169,7 +330,26 @@ class ClientAwareRAGEngine:
                 if detected_client:
                     client_name = detected_client
             
-            # Build filter
+            # Auto-detect if this is a contact information query
+            if prioritize_contact_info is None:
+                prioritize_contact_info = self.is_contact_information_query(query)
+            
+            sources = []
+            
+            # ALWAYS search MAGIC MEETING TRACKER first (most up-to-date data)
+            magic_tracker_sources = await self._search_magic_meeting_tracker(
+                query, client_name, top
+            )
+            sources.extend(magic_tracker_sources)
+            
+            # For contact queries, also search other contact-related documents
+            if prioritize_contact_info:
+                additional_contact_sources = await self._search_additional_contact_info(
+                    query, client_name, top, sources
+                )
+                sources.extend(additional_contact_sources)
+            
+            # Build filter for general document search
             filter_expression = self.build_client_filter(
                 client_name=client_name,
                 pm_initial=pm_initial,
@@ -177,42 +357,56 @@ class ClientAwareRAGEngine:
                 document_category=document_category
             )
             
-            # Perform search
-            search_params = {
-                "search_text": query,
-                "top": top * 2,  # Get extra results for better filtering
-                "search_mode": "any"
-            }
-            
-            if filter_expression:
-                search_params["filter"] = filter_expression
-            
-            results = self.search_client.search(**search_params)
-            
-            # Process results
-            sources = []
-            for result in results:
-                if len(sources) >= top:
-                    break
-                
-                source = {
-                    "content": result.get("chunk", ""),
-                    "content_preview": result.get("chunk", "")[:200] + "..." if len(result.get("chunk", "")) > 200 else result.get("chunk", ""),
-                    "sourcefile": result.get("filename", ""),
-                    "sourcepage": result.get("document_path", ""),
-                    "title": result.get("title", ""),
-                    "chunk_id": result.get("chunk_id", ""),
-                    "score": float(result.get("@search.score", 0)),
-                    
-                    # Client metadata
-                    "client_name": result.get("client_name", "Unknown"),
-                    "pm_initial": result.get("pm_initial", "N/A"),
-                    "document_category": result.get("document_category", "general"),
-                    "is_client_specific": result.get("is_client_specific", False),
-                    
-                    "source_type": "client_filtered" if filter_expression else "general"
+            # If we haven't reached our target with contact sources, get general results
+            remaining_needed = top - len(sources)
+            if remaining_needed > 0:
+                # Perform general search
+                search_params = {
+                    "search_text": query,
+                    "top": remaining_needed * 2,  # Get extra results for better filtering
+                    "search_mode": "any"
                 }
-                sources.append(source)
+                
+                if filter_expression:
+                    search_params["filter"] = filter_expression
+                
+                results = self.search_client.search(**search_params)
+                
+                # Process general search results
+                for result in results:
+                    if len(sources) >= top:
+                        break
+                    
+                    chunk_id = result.get("chunk_id", "")
+                    # Avoid duplicates from contact search
+                    if any(s["chunk_id"] == chunk_id for s in sources):
+                        continue
+                    
+                    source = {
+                        "content": result.get("chunk", ""),
+                        "content_preview": result.get("chunk", "")[:200] + "..." if len(result.get("chunk", "")) > 200 else result.get("chunk", ""),
+                        "sourcefile": result.get("filename", ""),
+                        "sourcepage": result.get("document_path", ""),
+                        "title": result.get("title", ""),
+                        "chunk_id": chunk_id,
+                        "score": float(result.get("@search.score", 0)),
+                        
+                        # Client metadata
+                        "client_name": result.get("client_name", "Unknown"),
+                        "pm_initial": result.get("pm_initial", "N/A"),
+                        "document_category": result.get("document_category", "general"),
+                        "is_client_specific": result.get("is_client_specific", False),
+                        
+                        "source_type": "client_filtered" if filter_expression else "general"
+                    }
+                    sources.append(source)
+            
+            # Sort all sources by score (contact sources already have boosted scores)
+            sources.sort(key=lambda x: x["score"], reverse=True)
+            
+            # Count different source types
+            magic_tracker_count = sum(1 for s in sources if s.get("source_type") == "magic_tracker_prioritized")
+            contact_sources_count = sum(1 for s in sources if s.get("source_type") in ["contact_supplementary", "magic_tracker_prioritized"])
             
             return {
                 "sources": sources,
@@ -221,7 +415,10 @@ class ClientAwareRAGEngine:
                 "pm_filter_applied": pm_initial,
                 "category_filter_applied": document_category,
                 "filter_expression": filter_expression,
-                "search_query": query
+                "search_query": query,
+                "contact_prioritized": prioritize_contact_info,
+                "contact_sources_found": contact_sources_count,
+                "magic_tracker_sources_found": magic_tracker_count
             }
             
         except Exception as e:
@@ -426,7 +623,7 @@ Provide a comprehensive answer that respects client confidentiality while being 
             # Use faceting to get client distribution
             results = self.search_client.search(
                 "*", 
-                facets=["client_name", "pm_initial"],
+                facets=["client_name,count:50", "pm_initial"],  # Get up to 50 client facets
                 top=0
             )
             
@@ -435,7 +632,8 @@ Provide a comprehensive answer that respects client confidentiality while being 
             clients = []
             if "client_name" in facets:
                 for facet in facets["client_name"]:
-                    if facet["value"] not in ["Uncategorized", "Processing Error", "Autobahn Internal"]:
+                    # Include all clients, but can optionally exclude certain categories
+                    if facet["value"] not in ["Processing Error"]:  # Only exclude genuine errors
                         clients.append({
                             "name": facet["value"],
                             "document_count": facet["count"]
