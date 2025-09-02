@@ -31,9 +31,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
     
     try:
+        logging.info('Processing RAG chat request')
         req_body = req.get_json()
         
         if not req_body:
+            logging.warning('No request body provided')
             return func.HttpResponse(
                 json.dumps({"error": "Request body is required"}),
                 status_code=400,
@@ -68,9 +70,21 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             )
         
         # Initialize Jennifur RAG system
-        rag_engine = ClientAwareRAGEngine()
+        logging.info('Initializing ClientAwareRAGEngine')
+        try:
+            rag_engine = ClientAwareRAGEngine()
+            logging.info('RAG engine initialized successfully')
+        except Exception as init_error:
+            logging.error(f'Failed to initialize RAG engine: {str(init_error)}')
+            return func.HttpResponse(
+                json.dumps({"error": f"RAG engine initialization failed: {str(init_error)}"}),
+                status_code=500,
+                mimetype="application/json",
+                headers=headers
+            )
         
         # Get response from Jennifur
+        logging.info(f'Processing chat with {len(messages)} messages')
         import asyncio
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -82,6 +96,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     pm_context=req_body.get("pm_context"),
                     session_id=session_id
                 )
+            )
+            logging.info('Successfully generated RAG response')
+        except Exception as chat_error:
+            logging.error(f'Chat processing failed: {str(chat_error)}')
+            return func.HttpResponse(
+                json.dumps({"error": f"Chat processing failed: {str(chat_error)}"}),
+                status_code=500,
+                mimetype="application/json",
+                headers=headers
             )
         finally:
             loop.close()
