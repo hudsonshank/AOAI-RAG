@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Jennifur (Walk + Talk)</title>
+<script src="https://alcdn.msauth.net/browser/2.32.2/js/msal-browser.min.js"></script>
 <style>
   :root{ 
     --primary: #059669; 
@@ -236,6 +237,17 @@
   .drop-hint{border:1px dashed var(--border-dark); border-radius:6px; padding:8px; font-size:11px; color:var(--text-dark-muted); text-align:center; background:rgba(255,255,255,0.05)}
   footer{padding:8px 16px; text-align:center; color:var(--text-dark-muted); font-size:11px; background:linear-gradient(135deg, var(--dark-surface), var(--primary-darker)); border-top:2px solid var(--border-dark); box-shadow:0 -2px 8px rgba(0,0,0,0.2)}
   
+  /* Authentication Styles */
+  .auth-overlay{position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(6,78,59,0.95); backdrop-filter:blur(10px); z-index:2000; display:flex; align-items:center; justify-content:center}
+  .auth-card{background:var(--chat-surface); border:2px solid var(--primary); border-radius:12px; padding:32px; max-width:400px; width:90vw; box-shadow:0 20px 50px rgba(0,0,0,0.8); text-align:center}
+  .auth-card h2{color:var(--primary); margin:0 0 16px; font-size:24px; font-weight:700}
+  .auth-card p{color:var(--text-chat-muted); margin:0 0 24px; line-height:1.5}
+  .auth-button{background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:white; border:none; padding:12px 24px; border-radius:8px; font-size:16px; font-weight:600; cursor:pointer; width:100%; transition:all .3s ease}
+  .auth-button:hover{background:linear-gradient(135deg, var(--primary-light), var(--primary)); transform:translateY(-2px)}
+  .user-info{position:fixed; top:15px; right:15px; background:var(--chat-surface); border:1px solid var(--primary); border-radius:8px; padding:8px 12px; font-size:12px; color:var(--text-chat); z-index:1001; display:flex; align-items:center; gap:8px}
+  .user-info img{width:24px; height:24px; border-radius:50%}
+  .sign-out-btn{background:var(--primary); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer}
+  
   /* Column Layout Styles - Even Smaller */
   .left-column, .right-column{
     display:flex; 
@@ -454,6 +466,22 @@
 </style>
 </head>
 <body>
+<!-- Authentication Overlay -->
+<div class="auth-overlay" id="authOverlay" style="display:none;">
+  <div class="auth-card">
+    <h2>Sign in to Jennifur</h2>
+    <p>Please sign in with your organizational account to access Jennifur.</p>
+    <button class="auth-button" id="signInButton">Sign In with Microsoft</button>
+  </div>
+</div>
+
+<!-- User Info (shown when logged in) -->
+<div class="user-info" id="userInfo" style="display:none;">
+  <img id="userPhoto" src="" alt="User Photo" style="display:none;">
+  <span id="userName"></span>
+  <button class="sign-out-btn" id="signOutButton">Sign Out</button>
+</div>
+
 <header>
 </header>
 
@@ -530,6 +558,151 @@
   Tip: Use WASD to move, left/right arrows to turn, up/down arrows for speed. Mouse drag to rotate camera, wheel to zoom. Space = start/stop walk.<br>
   Actions: M = meow, T = stretch, P = purr, Y = play, G = groom
 </footer>
+
+<script>
+// MSAL Configuration - REPLACE THESE VALUES WITH YOUR APP REGISTRATION DETAILS
+const msalConfig = {
+  auth: {
+    clientId: 'YOUR_CLIENT_ID_HERE', // Replace with your Application (client) ID
+    authority: 'https://login.microsoftonline.com/YOUR_TENANT_ID_HERE', // Replace with your Directory (tenant) ID
+    redirectUri: window.location.origin,
+  },
+  cache: {
+    cacheLocation: 'sessionStorage',
+    storeAuthStateInCookie: false,
+  }
+};
+
+const loginRequest = {
+  scopes: ['User.Read', 'openid', 'profile', 'email']
+};
+
+// Initialize MSAL instance
+const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+// Authentication state
+let currentUser = null;
+
+// DOM elements
+const authOverlay = document.getElementById('authOverlay');
+const userInfo = document.getElementById('userInfo');
+const signInButton = document.getElementById('signInButton');
+const signOutButton = document.getElementById('signOutButton');
+const userName = document.getElementById('userName');
+const userPhoto = document.getElementById('userPhoto');
+
+// Initialize authentication
+async function initAuth() {
+  try {
+    await msalInstance.initialize();
+    
+    // Handle redirect response
+    const response = await msalInstance.handleRedirectPromise();
+    if (response) {
+      currentUser = response.account;
+      updateUI();
+    } else {
+      // Check if user is already signed in
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length > 0) {
+        currentUser = accounts[0];
+        updateUI();
+      } else {
+        showSignIn();
+      }
+    }
+  } catch (error) {
+    console.error('Authentication initialization failed:', error);
+    showSignIn();
+  }
+}
+
+// Show sign-in overlay
+function showSignIn() {
+  authOverlay.style.display = 'flex';
+  userInfo.style.display = 'none';
+}
+
+// Hide sign-in overlay and show user info
+function hideSignIn() {
+  authOverlay.style.display = 'none';
+  userInfo.style.display = 'flex';
+}
+
+// Update UI based on authentication state
+async function updateUI() {
+  if (currentUser) {
+    hideSignIn();
+    
+    // Update user display name
+    userName.textContent = currentUser.name || currentUser.username;
+    
+    // Try to get user photo from Microsoft Graph
+    try {
+      const accessToken = await getAccessToken();
+      if (accessToken) {
+        const photoResponse = await fetch('https://graph.microsoft.com/v1.0/me/photo/$value', {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+        
+        if (photoResponse.ok) {
+          const photoBlob = await photoResponse.blob();
+          const photoUrl = URL.createObjectURL(photoBlob);
+          userPhoto.src = photoUrl;
+          userPhoto.style.display = 'block';
+        }
+      }
+    } catch (error) {
+      console.log('Could not load user photo:', error);
+    }
+  } else {
+    showSignIn();
+  }
+}
+
+// Get access token for Microsoft Graph
+async function getAccessToken() {
+  try {
+    const silentRequest = {
+      ...loginRequest,
+      account: currentUser
+    };
+    
+    const response = await msalInstance.acquireTokenSilent(silentRequest);
+    return response.accessToken;
+  } catch (error) {
+    console.error('Silent token acquisition failed:', error);
+    return null;
+  }
+}
+
+// Sign in
+async function signIn() {
+  try {
+    await msalInstance.loginRedirect(loginRequest);
+  } catch (error) {
+    console.error('Sign in failed:', error);
+  }
+}
+
+// Sign out
+async function signOut() {
+  try {
+    await msalInstance.logoutRedirect();
+  } catch (error) {
+    console.error('Sign out failed:', error);
+  }
+}
+
+// Event listeners
+signInButton.addEventListener('click', signIn);
+signOutButton.addEventListener('click', signOut);
+
+// Initialize authentication when page loads
+document.addEventListener('DOMContentLoaded', initAuth);
+</script>
 
 <script type="importmap">
 {
