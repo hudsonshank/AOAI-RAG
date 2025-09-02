@@ -7,7 +7,7 @@ import sys
 # Add the src path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from api.client_aware_rag import ClientAwareRAG
+from api.client_aware_rag import ClientAwareRAGEngine
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     """
@@ -67,11 +67,24 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 headers=headers
             )
         
-        # Initialize RAG system
-        rag = ClientAwareRAG()
+        # Initialize Jennifur RAG system
+        rag_engine = ClientAwareRAGEngine()
         
-        # Get response from RAG
-        response = rag.chat_with_context(user_message, session_id=session_id)
+        # Get response from Jennifur
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            response = loop.run_until_complete(
+                rag_engine.client_aware_chat(
+                    messages=messages,
+                    client_context=req_body.get("client_context"),
+                    pm_context=req_body.get("pm_context"),
+                    session_id=session_id
+                )
+            )
+        finally:
+            loop.close()
         
         return func.HttpResponse(
             json.dumps(response, indent=2),
