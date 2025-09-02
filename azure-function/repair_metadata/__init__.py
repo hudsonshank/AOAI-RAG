@@ -214,38 +214,60 @@ class MetadataRepairProcessor:
             raise
 
     def _extract_client_metadata_from_path(self, doc_path: str) -> Dict[str, Any]:
-        """Extract client and PM metadata from SharePoint folder path"""
+        """Extract client and PM metadata from SharePoint folder path, prioritizing main client folder"""
         
-        # Pattern to match "Client Name (PM-X)" format - more flexible
-        patterns = [
-            r'([^/]+)\s*\(PM-([A-Z])\)',  # Standard format without leading slash
-            r'([^/]+)\s*\(PM-([a-zA-Z])\)',  # Case insensitive PM code
-            r'(.*?)\s*\(PM-([A-Z])\)',  # Any text before PM pattern
-        ]
+        logging.info(f'🏢 Extracting client metadata from path: {doc_path}')
         
-        for pattern in patterns:
-            match = re.search(pattern, doc_path, re.IGNORECASE)
-            if match:
-                client_name = match.group(1).strip()
-                pm_code = match.group(2).upper()
-                
-                # Map PM codes to names - updated mapping
-                pm_mapping = {
-                    'C': 'Caleb',
-                    'K': 'Katherine', 
-                    'S': 'Sam'
-                }
-                
-                pm_name = pm_mapping.get(pm_code, pm_code)
-                
-                return {
-                    'client_name': client_name,
-                    'pm_code': pm_code,
-                    'pm_name': pm_name,
-                    'confidence_score': 0.9
-                }
+        # First, look for the main client folder pattern: Client Name (PM-X)/
+        # This ensures we extract from the main folder, not subfolders like "Archived"
+        client_folder_pattern = r'([^/]+)\s*\(PM-([A-Za-z])\)/'
+        match = re.search(client_folder_pattern, doc_path, re.IGNORECASE)
         
-        return None
+        if match:
+            client_name = match.group(1).strip()
+            pm_code = match.group(2).upper()
+            
+            logging.info(f'✅ Found main client folder: "{client_name}" with PM-{pm_code}')
+        else:
+            # Fallback: look for client pattern anywhere in path (less preferred)
+            fallback_patterns = [
+                r'([^/]+)\s*\(PM-([A-Z])\)',  # Standard format
+                r'([^/]+)\s*\(PM-([a-zA-Z])\)',  # Case insensitive PM code
+                r'(.*?)\s*\(PM-([A-Z])\)',  # Any text before PM pattern
+            ]
+            
+            for pattern in fallback_patterns:
+                match = re.search(pattern, doc_path, re.IGNORECASE)
+                if match:
+                    client_name = match.group(1).strip()
+                    pm_code = match.group(2).upper()
+                    logging.info(f'⚠️ Using fallback pattern for client: "{client_name}" with PM-{pm_code}')
+                    break
+            else:
+                logging.warning(f'❌ No client metadata found in path: {doc_path}')
+                return None
+        
+        # Map PM codes to names
+        pm_mapping = {
+            'C': 'Caleb',
+            'K': 'Katherine', 
+            'S': 'Sam'
+        }
+        
+        pm_name = pm_mapping.get(pm_code, pm_code)
+        
+        # Clean up client name (remove leading/trailing slashes and whitespace)
+        client_name = client_name.strip('/ ')
+        
+        result = {
+            'client_name': client_name,
+            'pm_code': pm_code,
+            'pm_name': pm_name,
+            'confidence_score': 0.9
+        }
+        
+        logging.info(f'🎯 Extracted client metadata: {result}')
+        return result
 
     def _extract_document_category_from_path(self, doc_path: str) -> str:
         """Extract document category from the main category folder, ignoring subfolders"""

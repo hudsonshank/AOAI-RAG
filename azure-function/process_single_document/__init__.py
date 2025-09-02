@@ -880,45 +880,205 @@ class DocumentProcessor:
         return fallback_text
 
     def _extract_client_metadata_from_path(self, doc_path: str) -> Dict[str, Any]:
-        """Extract client and PM metadata from SharePoint folder path"""
+        """Extract client and PM metadata from SharePoint folder path, prioritizing main client folder"""
         import re
         
-        logging.info(f'🔍 Extracting client metadata from path: {doc_path}')
+        logging.info(f'🏢 Extracting client metadata from path: {doc_path}')
         
-        # Pattern to match "Client Name (PM-X)" format - more flexible
-        patterns = [
-            r'([^/]+)\s*\(PM-([A-Z])\)',  # Standard format without leading slash
-            r'([^/]+)\s*\(PM-([a-zA-Z])\)',  # Case insensitive PM code
-            r'(.*?)\s*\(PM-([A-Z])\)',  # Any text before PM pattern
-        ]
+        # First, look for the main client folder pattern: Client Name (PM-X)/
+        # This ensures we extract from the main folder, not subfolders like "Archived"
+        client_folder_pattern = r'([^/]+)\s*\(PM-([A-Za-z])\)/'
+        match = re.search(client_folder_pattern, doc_path, re.IGNORECASE)
         
-        for pattern in patterns:
-            match = re.search(pattern, doc_path, re.IGNORECASE)
-            if match:
-                client_name = match.group(1).strip()
-                pm_code = match.group(2).upper()
-                
-                # Map PM codes to names - updated mapping
-                pm_mapping = {
-                    'C': 'Caleb',
-                    'K': 'Katherine', 
-                    'S': 'Sam'
-                }
-                
-                pm_name = pm_mapping.get(pm_code, pm_code)
-                
-                logging.info(f'✅ Extracted client metadata: "{client_name}" (PM-{pm_code} = {pm_name})')
-                
-                return {
-                    'client_name': client_name,
-                    'pm_code': pm_code,
-                    'pm_name': pm_name,
-                    'confidence_score': 0.9  # High confidence for pattern match
-                }
+        if match:
+            client_name = match.group(1).strip()
+            pm_code = match.group(2).upper()
+            
+            logging.info(f'✅ Found main client folder: "{client_name}" with PM-{pm_code}')
+        else:
+            # Fallback: look for client pattern anywhere in path (less preferred)
+            fallback_patterns = [
+                r'([^/]+)\s*\(PM-([A-Z])\)',  # Standard format
+                r'([^/]+)\s*\(PM-([a-zA-Z])\)',  # Case insensitive PM code
+                r'(.*?)\s*\(PM-([A-Z])\)',  # Any text before PM pattern
+            ]
+            
+            for pattern in fallback_patterns:
+                match = re.search(pattern, doc_path, re.IGNORECASE)
+                if match:
+                    client_name = match.group(1).strip()
+                    pm_code = match.group(2).upper()
+                    logging.info(f'⚠️ Using fallback pattern for client: "{client_name}" with PM-{pm_code}')
+                    break
+            else:
+                logging.warning(f'❌ No client metadata found in path: {doc_path}')
+                return None
         
-        logging.warning(f'⚠️ Could not extract client metadata from path: {doc_path}')
-        return None
+        # Map PM codes to names
+        pm_mapping = {
+            'C': 'Caleb',
+            'K': 'Katherine', 
+            'S': 'Sam'
+        }
+        
+        pm_name = pm_mapping.get(pm_code, pm_code)
+        
+        # Clean up client name (remove leading/trailing slashes and whitespace)
+        client_name = client_name.strip('/ ')
+        
+        result = {
+            'client_name': client_name,
+            'pm_code': pm_code,
+            'pm_name': pm_name,
+            'confidence_score': 0.9
+        }
+        
+        logging.info(f'🎯 Extracted client metadata: {result}')
+        return result
 
+    def _process_magic_meeting_tracker(self, doc_content: bytes, doc_name: str, doc_path: str, doc_id: str) -> List[Dict[str, Any]]:
+        """Special processing for Magic Meeting Tracker Excel file with sheet-based client attribution"""
+        try:
+            # Import the enhanced Excel processor
+            import sys
+            import os
+            sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+            from enhanced_excel_processor import EnhancedExcelProcessor
+            
+            logging.info(f'🎯 Processing Magic Meeting Tracker with sheet-based client detection')
+            
+            # Initialize the enhanced processor
+            processor = EnhancedExcelProcessor()
+            excel_data = processor.extract_from_excel(doc_content, doc_name)
+            
+            if excel_data.get("type") == "excel_error":
+                logging.error(f'Enhanced Excel processing failed: {excel_data.get("error")}')
+                # Fallback to standard processing
+                return self._fallback_excel_processing(doc_content, doc_name, doc_path, doc_id)
+            
+            # Create chunks for each sheet with its own client metadata
+            all_chunks = []
+            current_timestamp = datetime.datetime.utcnow().isoformat() + "Z"
+            
+            for sheet_name, sheet_data in excel_data["sheets"].items():
+                content = sheet_data["content"]
+                client_info = sheet_data.get("client_info")
+                
+                if not content or len(content.strip()) < 10:  # Lower minimum content threshold
+                    logging.warning(f'⚠️ Sheet "{sheet_name}" skipped due to insufficient content: {len(content) if content else 0} characters')
+                    continue
+                
+                logging.info(f'📄 Processing sheet "{sheet_name}": {len(content)} characters, client_info: {bool(client_info)}')
+                
+                # Determine client metadata for this sheet
+                if client_info and client_info.get("sheet_client_name"):
+                    # Use detected client from sheet name
+                    sheet_client_name = client_info["sheet_client_name"]
+                    sheet_pm_initial = client_info.get("sheet_pm_initial", "N/A")
+                    sheet_pm_name = client_info.get("sheet_pm_name", "N/A")
+                    is_client_specific = True
+                    has_client_folder = True
+                    
+                    logging.info(f'📋 Sheet "{sheet_name}" attributed to client: {sheet_client_name}')
+                else:
+                    # Default to internal if no client detected from sheet name
+                    sheet_client_name = "Autobahn Internal"
+                    sheet_pm_initial = "N/A"
+                    sheet_pm_name = "N/A"
+                    is_client_specific = False
+                    has_client_folder = False
+                    
+                    logging.warning(f'⚠️ Sheet "{sheet_name}" could not detect client, defaulting to Autobahn Internal')
+                
+                # Create metadata for this sheet
+                sheet_metadata = {
+                    "document_path": f"{doc_path} (Sheet: {sheet_name})",
+                    "filename": f"{doc_name} - {sheet_name}",
+                    "processed_timestamp": current_timestamp,
+                    "content_length": len(content),
+                    "word_count": len(content.split()),
+                    "character_count": len(content),
+                    "folder_depth": len([p for p in doc_path.split('/') if p.strip()]),
+                    "file_extension": ".xlsx",
+                    "is_client_specific": is_client_specific,
+                    "has_client_folder": has_client_folder,
+                    "client_name": sheet_client_name,
+                    "pm_initial": sheet_pm_initial,
+                    "pm_name": sheet_pm_name,
+                    "document_category": "meeting_tracking",
+                    "document_id": f"{doc_id}_sheet_{sheet_name.replace(' ', '_')}",
+                    "chunk_method": "enhanced_excel_sheet_based",
+                    "source": "Magic Meeting Tracker",
+                    "sheet_name": sheet_name,
+                    "sheet_client_confidence": client_info.get("confidence", 0.0) if client_info else 0.0
+                }
+                
+                # Chunk the sheet content (will be mostly single chunk unless very large)
+                sheet_chunks = self._chunk_excel_sheet_content(content, sheet_metadata)
+                all_chunks.extend(sheet_chunks)
+            
+            logging.info(f'✅ Successfully processed Magic Meeting Tracker: {len(all_chunks)} chunks from {len(excel_data["sheets"])} sheets')
+            return all_chunks
+            
+        except Exception as e:
+            logging.error(f'Error processing Magic Meeting Tracker: {str(e)}')
+            # Fallback to standard processing
+            return self._fallback_excel_processing(doc_content, doc_name, doc_path, doc_id)
+    
+    def _chunk_excel_sheet_content(self, content: str, metadata: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Chunk content from a single Excel sheet"""
+        chunk_size = 1000
+        overlap = 100
+        chunks = []
+        
+        if len(content) <= chunk_size:
+            # Single chunk
+            chunk_data = {
+                **metadata,
+                "chunk": content,
+                "chunk_id": f"{metadata['document_id']}_0",
+                "parent_id": metadata['document_id'],
+                "chunk_index": 0,
+                "title": f"{metadata['filename']} - {metadata['sheet_name']}"
+            }
+            chunks.append(chunk_data)
+        else:
+            # Multiple chunks with overlap
+            start = 0
+            chunk_index = 0
+            
+            while start < len(content):
+                end = min(start + chunk_size, len(content))
+                chunk_content = content[start:end]
+                
+                chunk_data = {
+                    **metadata,
+                    "chunk": chunk_content,
+                    "chunk_id": f"{metadata['document_id']}_{chunk_index}",
+                    "parent_id": metadata['document_id'],
+                    "chunk_index": chunk_index,
+                    "title": f"{metadata['filename']} - {metadata['sheet_name']} (Part {chunk_index + 1})"
+                }
+                chunks.append(chunk_data)
+                
+                # Move start position with overlap
+                start += chunk_size - overlap
+                chunk_index += 1
+        
+        return chunks
+    
+    def _fallback_excel_processing(self, doc_content: bytes, doc_name: str, doc_path: str, doc_id: str) -> List[Dict[str, Any]]:
+        """Fallback Excel processing using standard method"""
+        try:
+            extracted_text, cost, success = self._extract_text_with_cost_tracking(doc_content, doc_name)
+            if success and extracted_text:
+                client_metadata = self._extract_client_metadata_from_path(doc_path)
+                chunks = self._chunk_text(extracted_text, doc_id, doc_name, doc_path, client_metadata)
+                return chunks
+        except Exception as e:
+            logging.error(f'Fallback Excel processing failed: {str(e)}')
+        return []
+    
     def _chunk_text(self, text: str, doc_id: str, doc_name: str, doc_path: str, client_metadata: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """Chunk text into 1000 character chunks with 100 character overlap, matching specified format"""
         
@@ -1145,6 +1305,41 @@ class DocumentProcessor:
         except Exception as e:
             logging.error(f'Error storing processed document: {str(e)}')
             raise
+    
+    def _store_magic_meeting_tracker_chunks(self, chunks: List[Dict[str, Any]], doc_id: str, filename: str, doc_path: str, doc: Dict[str, Any]):
+        """Store Magic Meeting Tracker chunks with proper client attribution"""
+        try:
+            container_client = self.storage_client.get_container_client("jennifur-processed")
+            
+            for i, chunk in enumerate(chunks):
+                chunk_filename = f"{chunk['chunk_id']}.json"
+                
+                # Add common document metadata
+                chunk.update({
+                    "original_filename": filename,
+                    "original_document_id": doc_id,
+                    "download_url": doc.get('download_url', ''),
+                    "file_size_bytes": doc.get('size', 0),
+                    "sharepoint_item_id": doc.get('id', ''),
+                    "last_modified": doc.get('last_modified', ''),
+                    "processing_method": "magic_meeting_tracker_specialized"
+                })
+                
+                # Upload chunk
+                container_client.upload_blob(
+                    name=chunk_filename,
+                    data=json.dumps(chunk, indent=2),
+                    overwrite=True,
+                    content_type='application/json'
+                )
+                
+                logging.info(f'📄 Stored chunk {i+1}: {chunk_filename} (client: {chunk.get("client_name", "Unknown")}, sheet: {chunk.get("sheet_name", "Unknown")})')
+            
+            logging.info(f'✅ Magic Meeting Tracker stored: {len(chunks)} chunks from {filename}')
+            
+        except Exception as e:
+            logging.error(f'Error storing Magic Meeting Tracker chunks: {str(e)}')
+            raise
 
     def _process_single_document_with_cost_control(self, doc: Dict[str, Any]) -> Dict[str, Any]:
         """Process a single document with enhanced cost control and size limits"""
@@ -1199,6 +1394,31 @@ class DocumentProcessor:
                     "extension": doc_extension,
                     "cost_estimate": 0.0
                 }
+            
+            # Special handling for Magic Meeting Tracker Excel file
+            if doc_name.lower().startswith('magic meeting tracker') and doc_extension in ['.xlsx', '.xls']:
+                logging.info(f'🎯 Detected Magic Meeting Tracker, using specialized processing')
+                try:
+                    chunks = self._process_magic_meeting_tracker(doc_content, doc_name, doc_path, doc_id)
+                    if chunks:
+                        # Store chunks directly
+                        self._store_magic_meeting_tracker_chunks(chunks, doc_id, doc_name, doc_path, doc)
+                        
+                        result_base = {
+                            "path": doc_path,
+                            "extension": doc_extension,
+                            "processing_duration_seconds": round((datetime.datetime.utcnow() - processing_start).total_seconds(), 2),
+                            "file_size_bytes": download_size,
+                            "cost_estimate": round(estimated_cost, 4),
+                            "chunk_count": len(chunks),
+                            "sheets_processed": len(set(chunk.get('sheet_name', '') for chunk in chunks))
+                        }
+                        logging.info(f'✅ Magic Meeting Tracker processed: {len(chunks)} chunks from {result_base["sheets_processed"]} sheets')
+                        return {**result_base, "action": "processed"}
+                    else:
+                        logging.warning(f'⚠️ Magic Meeting Tracker processing returned no chunks, falling back to standard processing')
+                except Exception as e:
+                    logging.error(f'Magic Meeting Tracker processing failed: {str(e)}, falling back to standard processing')
             
             # Extract text with cost estimation
             try:
