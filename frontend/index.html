@@ -3147,8 +3147,12 @@ addEventListener('resize', ()=>{ renderer.setSize(stage.clientWidth, stage.clien
 // RAG API Integration
 async function getChatGPTResponse(userMessage) {
   try {
-    // Use Azure Static Web App API (Jennifur with MAGIC TRACKER priority)
-    const response = await fetch('/api/chat', {
+    // Determine which endpoint to use based on hostname
+    const apiEndpoint = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:'
+      ? 'http://localhost:5001/api/chat'  // Local development
+      : 'https://jennifur-pii-processor-dkfddhhggvarbxcr.eastus2-01.azurewebsites.net/api/chat'; // Production
+    
+    const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
