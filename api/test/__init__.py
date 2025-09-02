@@ -53,9 +53,23 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         
         # Test 3: Try importing our RAG engine
         try:
-            sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
-            from api.client_aware_rag import ClientAwareRAGEngine
-            result["rag_engine_import"] = "✅ Success"
+            src_path = os.path.join(os.path.dirname(__file__), '..', '..', 'src')
+            sys.path.insert(0, src_path)
+            
+            try:
+                from api.client_aware_rag import ClientAwareRAGEngine
+                result["rag_engine_import"] = "✅ Success (direct import)"
+            except ImportError:
+                # Alternative import path for Azure Functions
+                import importlib.util
+                spec = importlib.util.spec_from_file_location(
+                    "client_aware_rag", 
+                    os.path.join(src_path, "api", "client_aware_rag.py")
+                )
+                client_aware_rag_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(client_aware_rag_module)
+                ClientAwareRAGEngine = client_aware_rag_module.ClientAwareRAGEngine
+                result["rag_engine_import"] = "✅ Success (alternative import)"
         except Exception as e:
             result["rag_engine_import"] = f"❌ Failed: {str(e)}"
         

@@ -5,9 +5,16 @@ import os
 import sys
 
 # Add the src path for imports
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+src_path = os.path.join(os.path.dirname(__file__), '..', '..', 'src')
+sys.path.insert(0, src_path)
 
-from api.client_aware_rag import ClientAwareRAGEngine
+# Import the RAG engine directly
+try:
+    from client_aware_rag import ClientAwareRAGEngine
+except ImportError:
+    import sys
+    sys.path.append(os.path.dirname(__file__))
+    from client_aware_rag import ClientAwareRAGEngine
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     """
