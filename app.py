@@ -69,6 +69,11 @@ def health():
         "environment": "production"
     })
 
+@app.route('/healthz', methods=['GET'])
+def healthz():
+    """Simple health check for Azure App Service"""
+    return jsonify({"status": "ok"}), 200
+
 @app.route('/api/chat', methods=['POST', 'OPTIONS'])
 def chat():
     """Chat endpoint that mimics Azure Function behavior"""
