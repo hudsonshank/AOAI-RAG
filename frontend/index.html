@@ -390,16 +390,13 @@
   
   @media (max-width: 900px) {
     .panel {
-      flex-direction: column;
-      align-items: flex-start;
-      justify-content: flex-start;
       padding: 6px;
       gap: 4px;
       max-height: 20vh;
     }
     .left-column, .right-column {
-      width: 100%;
-      max-width: 180px;
+      min-width: clamp(80px, 10vw, 120px);
+      max-width: clamp(120px, 15vw, 160px);
     }
     .chat-overlay {
       width: clamp(350px, 70vw, 500px);
@@ -413,7 +410,12 @@
   @media (max-width: 600px) {
     .panel {
       padding: 4px;
+      gap: 3px;
       max-height: 25vh;
+    }
+    .left-column, .right-column {
+      min-width: clamp(70px, 8vw, 100px);
+      max-width: clamp(100px, 12vw, 130px);
     }
     .chat-overlay {
       width: clamp(300px, 85vw, 450px);
@@ -426,15 +428,20 @@
       padding: clamp(3px, 0.8vw, 4px);
     }
     .left-column button, .right-column button {
-      min-height: clamp(20px, 2.5vh, 25px);
-      font-size: clamp(7px, 0.9vw, 8px);
+      min-height: clamp(18px, 2vh, 22px);
+      font-size: clamp(6px, 0.8vw, 7px);
+      padding: clamp(3px, 0.6vw, 4px) clamp(4px, 0.8vw, 6px);
     }
   }
   
   @media (max-width: 480px) {
     .panel {
       padding: 3px;
-      gap: 3px;
+      gap: 2px;
+    }
+    .left-column, .right-column {
+      min-width: clamp(60px, 7vw, 80px);
+      max-width: clamp(80px, 10vw, 100px);
     }
     .chat-overlay {
       width: calc(100vw - 20px);
