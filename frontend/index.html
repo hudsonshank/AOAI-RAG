@@ -3150,7 +3150,7 @@ async function getChatGPTResponse(userMessage) {
     // Determine which endpoint to use based on hostname
     const apiEndpoint = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
       ? 'http://localhost:5001/api/chat'  // Local development
-      : 'http://10.137.10.180:5001/api/chat'; // Point to your working local RAG server
+      : 'https://jennifur-rag.azurewebsites.net/api/chat'; // Production Azure backend
     
     console.log('Current hostname:', window.location.hostname);
     console.log('Current protocol:', window.location.protocol);
